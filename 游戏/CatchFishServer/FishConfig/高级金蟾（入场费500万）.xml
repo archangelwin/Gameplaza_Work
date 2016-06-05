@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<server>
+	<config description="单元积分" cell_score="10000" />
+	<config description="最小积分" min_score="10000" />
+	<config description="最大积分" max_score="100000" />
+
+	<config description="每次上分" add_score="10000000" />
+	<config description="兑换比例" exchange="1" />
+
+	<config description="最大子弹" max_bullet="20" />
+    
+	<config description="练习房间" exercise="10000000" />
+	<config description="机器人锁鱼几率" android_lock="50" />
+
+	<config description="动态库存难度调整正系数" autostockdiffmaxfactor="3.8" />
+	<config description="动态库存难度调整最大值" autostockdiffmaxvalue="200000000" />
+
+	<fish name="金蟾6" id="1010" hit="3000" multiple="2" />
+	<fish name="金蟾7" id="1011" hit="2000" multiple="3" />
+	<fish name="金蟾8" id="1012" hit="1000" multiple="6" />
+	<fish name="金蟾9" id="1013" hit="600" multiple="10" />
+	<fish name="金蟾10" id="1014" hit="400" multiple="15" />
+
+	<plot name="" type="-1" percent="100" elapse="5" execute_count="1" fish_id_begin="10" fish_id_range="5" path_index_begin="20" path_index_range="5" delay_time="0" space_time="0" />
+	<plot name="" type="-1" percent="100" elapse="5" execute_count="1" fish_id_begin="10" fish_id_range="5" path_index_begin="25" path_index_range="5" delay_time="0" space_time="0" />
+	<plot name="" type="-1" percent="100" elapse="5" execute_count="1" fish_id_begin="10" fish_id_range="5" path_index_begin="23" path_index_range="5" delay_time="0" space_time="0" />
+</server>

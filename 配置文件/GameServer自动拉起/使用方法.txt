@@ -1,0 +1,8 @@
+1. 在AutoStartGameServerConfig.ini 里面的ServerID 填写对应的ServerID
+
+2. 修改daemon.bat里面的_task 为启动进程的进程名称, 这里要保证这个进程名字的唯一
+比如 GameServer_clown1
+
+把 _svr 修改成对应的GameServer的路径, 比如g:\WorkCode\lele2-20160222_for_autostart\运行\Release\Ansi\GameServer_clown1.exe 
+
+3. 注意文件AutoStartGameServerConfig.ini 和 daemon.bat文件的编码格式都是ANSI

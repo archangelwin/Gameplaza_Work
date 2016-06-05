@@ -1,0 +1,9 @@
+2016-5-18
+额外奖励
+1. SignLog table 
+增加字段
+ExtraBonusSignedDay 记录 已经在额外奖励中添加的字段, 位图表示, 第零位为1, 表示已经签到第一天 额外奖励
+
+IsExtraBonusOver   第一周额外奖励是否结束, 如果结束额外奖励停止
+
+IsSignInInterrupt  是否断签, 断签后额外奖励不在已经签到过的天数里面显示

@@ -1,0 +1,434 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<server>
+	<config description="单元积分" cell_score="250" />
+	<config description="最小积分" min_score="250" />
+	<config description="最大积分" max_score="1000" />
+
+	<config description="每次上分" add_score="100000" />
+	<config description="兑换比例" exchange="1" />
+
+	<config description="最大子弹" max_bullet="20" />
+
+	<config description="练习房间" exercise="0" />
+	<config description="机器人锁鱼几率" android_lock="50" />
+
+	<config description="动态库存难度调整正系数" autostockdiffmaxfactor="3.8" />
+	<config description="动态库存难度调整最大值" autostockdiffmaxvalue="2000000" />
+
+	<!--比赛配置-->
+	<config description="比赛检查间隔(秒，0为禁用比赛)" checkmatchelapse="10" />
+	<!--比赛时间数字位数，2位：每小时，4位：每天，5位：每周，6位：每月，9位固定时间-->
+	<config tag="1" description="比赛启动时间(y-mm-dd(w)-HH-MM)" matchtimestart="0001" />
+	<config tag="1" description="比赛结束时间(y-mm-dd(w)-HH-MM)" matchtimeend="2359" />
+	<config tag="1" description="比赛积分重置类型，0：单次，1：每小时一次，2：每天一次，3：每星期一次，4：每月一次" matchresettype="2" />
+	<config tag="1" description="比赛标识(单次类型无效，取值1-9，1为99炮，2为1000炮，3为10000炮)" matchflag="3" />
+	<config tag="1" description="比赛提示广播" sendmatchinfo="每天24小时渔王争霸，火爆开赛。千万金币、丰厚奖券加iphone6s plus海量实物奖品寻找最牛捕鱼大咖。全力开战，就等你来。" />
+	<config tag="1" description="比赛提示广播间隔(秒，0为不广播)" sendmatchinfoelapse="600" />
+
+	<config description="切换剧情时间（单位：秒）" timechangescene="300" />
+	<config description="剧情数量" plotnumber="4" />
+	<config description="剧情0切换时间" timeplot0="25" /><!--鱼球对冲-->
+	<config description="剧情1切换时间" timeplot1="32" /><!--中心发散-->
+	<config description="剧情2切换时间" timeplot2="43" /><!--鱼球对冲-->
+	<config description="剧情3切换时间" timeplot3="40" /><!--静止鱼队->对冲-->
+
+	<!--<notice notice_id="100" info="太棒了，[%s]成功击中一条[%s]！" />
+	<notice notice_id="101" info="恭喜[%s]，幸运的击中了[%s]真让人羡慕！" />
+	<notice notice_id="102" info="[%s]大喊一声“中”，路过的[%s]应声倒地！" />
+	<notice notice_id="103" info="[%s]击中了[%s]，这下发大财了！" />
+	<notice notice_id="104" info="运气好到爆，[%s]随手一炮就击中了[%s]！" />
+	<notice notice_id="105" info="[%s]一举击中了[%s]，让人震惊！" />
+	<notice notice_id="106" info="[%s]凭借自己不俗的技术击中了[%s]！" />
+	<notice notice_id="107" info="[%s]自信的说[%s]要多少有多少！" />
+	<notice notice_id="108" info="[%s]收服了[%s]，瞬间成为捕鱼大咖。" />-->
+
+	<!--鱼配置，依次为：name=名称、id=ID、hit=命中率、multiple=倍率-->
+	<fish name="小草鱼" id="1000" hit="3000" multiple="2" />
+	<fish name="小黄鱼" id="1001" hit="3000" multiple="2" />
+	<fish name="海马" id="1002" hit="2000" multiple="3" />
+	<fish name="小丑鱼" id="1003" hit="1500" multiple="4" />
+	<fish name="斑马鱼" id="1004" hit="1200" multiple="5" />
+	<fish name="宝石鱼" id="1005" hit="1000" multiple="6" />
+	<fish name="河豚" id="1006" hit="857" multiple="7" />
+	<fish name="鱿鱼" id="1007" hit="750" multiple="8" />
+	<fish name="瘦骨鱼" id="1008" hit="666" multiple="9" />
+	<fish name="孔雀鱼" id="1009" hit="666" multiple="9" />
+	<fish name="海龟" id="1010" hit="600" multiple="10" />
+	<fish name="蝙蝠鱼" id="1011" hit="500" multiple="12" />
+	<fish name="比目鱼" id="1012" hit="400" multiple="15" />
+	<fish name="老虎鱼" id="1013" hit="333" multiple="18" />
+	<fish name="石斑鱼" id="1014" hit="300" multiple="20" />
+	<fish name="金鲨" id="1015" hit="150" multiple="40" />
+	<fish name="电鳗" id="1016" hit="75" multiple="80" />
+	<fish name="金龙鱼" id="1017" hit="60" multiple="100" />
+	<fish name="美人鱼" id="1018" hit="20" multiple="1" boss="1"/>
+	<!--<fish name="定海神针" id="1019" hit="100" multiple="1" freeze="1" />-->
+	<!--<fish name="半屏炸弹" id="1020" hit="25" multiple="1" rangebomb="1" />-->
+	<!--<fish name="全屏炸弹" id="1020" hit="20" multiple="1" bomb="1" />-->
+
+	<fish name="绿蟾" id="1021" hit="20" multiple="250" />
+	<fish name="金蟾" id="1022" hit="20" multiple="300" />
+	<!--<fish name="" id="1030" hit="500" multiple="12" />
+	<fish name="" id="1031" hit="375" multiple="16" />
+	<fish name="" id="1032" hit="187" multiple="32" />
+	<fish name="" id="1033" hit="150" multiple="40" />
+	<fish name="" id="1034" hit="142" multiple="42" />
+	<fish name="" id="1035" hit="122" multiple="49" />
+	<fish name="" id="1036" hit="66" multiple="90" />
+	<fish name="金鲨组合" id="1037" hit="60" multiple="100" />-->
+
+	<fish name="组合鱼" id="1040" hit="250" multiple="4" samedie="1" samedieid="1000" plot="200" />
+	<fish name="组合鱼" id="1041" hit="250" multiple="4" samedie="1" samedieid="1001" plot="201" />
+	<fish name="组合鱼" id="1042" hit="220" multiple="6" samedie="1" samedieid="1002" plot="202" />
+	<fish name="组合鱼" id="1043" hit="180" multiple="8" samedie="1" samedieid="1003" plot="203" />
+	<fish name="组合鱼" id="1044" hit="150" multiple="10" samedie="1" samedieid="1004" plot="204" />
+	<fish name="组合鱼" id="1045" hit="120" multiple="12" samedie="1" samedieid="1005" plot="205" />
+
+	<!--同一路线，一群小鱼，group_pos：是否是一群-->
+	<!--
+	<plot name="" type="-1" percent="100" elapse="15" execute_count="3" fish_id_begin="0" fish_id_range="2" path_index_begin="0" path_index_range="20" delay_time="100" group_pos="1" />
+
+	<plot name="" type="-1" percent="100" elapse="9" execute_count="2" execute_range="3" fish_id_begin="0" fish_id_range="4" path_index_begin="0" path_index_range="20" delay_time="100" space_time="50" />
+	<plot name="" type="-1" percent="100" elapse="12" execute_count="2" execute_range="3" fish_id_begin="2" fish_id_range="2" path_index_begin="0" path_index_range="20" delay_time="100" space_time="50" />
+	<plot name="" type="-1" percent="100" elapse="12" execute_count="2" execute_range="3" fish_id_begin="2" fish_id_range="4" path_index_begin="30" path_index_range="15" delay_time="100" space_time="50" />
+	<plot name="" type="-1" percent="100" elapse="30" execute_count="2" execute_range="3" fish_id_begin="0" fish_id_range="2" path_index_begin="45" path_index_range="6" delay_time="100" space_time="50" />
+	<plot name="" type="-1" percent="100" elapse="20" execute_count="2" execute_range="3" fish_id_begin="0" fish_id_range="2" path_index_begin="60" path_index_range="2" delay_time="0" space_time="50" />
+	<plot name="" type="-1" percent="100" elapse="20" execute_count="2" execute_range="3" fish_id_begin="0" fish_id_range="4" path_index_begin="62" path_index_range="2" delay_time="200" space_time="50" />
+	<plot name="" type="-1" percent="100" elapse="25" execute_count="2" execute_range="3" fish_id_begin="0" fish_id_range="2" path_index_begin="64" path_index_range="4" delay_time="500" space_time="50" />
+	<plot name="" type="-1" percent="100" elapse="10" execute_count="2" execute_range="3" fish_id_begin="6" fish_id_range="4" path_index_begin="92" path_index_range="4" delay_time="0" space_time="100" />
+	<plot name="" type="-1" percent="100" elapse="10" execute_count="1" execute_range="2" fish_id_begin="10" fish_id_range="4" path_index_begin="96" path_index_range="4" delay_time="0" space_time="100" />
+
+	<plot name="" type="-1" percent="100" elapse="25" execute_count="1" fish_id_begin="14" fish_id_range="2" path_index_begin="85" path_index_range="6" delay_time="0" space_time="0" />
+
+	<plot name="" type="-1" percent="100" elapse="30" execute_count="1" fish_id_begin="16" fish_id_range="2" path_index_begin="85" path_index_range="6" delay_time="0" space_time="0" />
+
+	<plot name="" type="-1" percent="100" elapse="60" execute_count="1" fish_id_begin="20" fish_id_range="3" path_index_begin="20" path_index_range="10" delay_time="0" space_time="0" />
+
+	<plot name="" type="-1" percent="100" elapse="80" execute_count="1" fish_id_begin="18" fish_id_range="1" path_index_begin="74" path_index_range="8" delay_time="0" space_time="1000" />
+
+	<plot name="" type="-1" percent="100" elapse="70" execute_count="1" fish_id_begin="19" fish_id_range="1" path_index_begin="74" path_index_range="8" delay_time="0" space_time="1000" />
+
+	<plot name="" type="-1" percent="100" elapse="20" execute_count="1" fish_id_begin="40" fish_id_range="6" path_index_begin="30" path_index_range="15" delay_time="100" space_time="1000" />
+-->
+
+<!-- 小鱼  -->
+	<plot name="" type="-1" percent="100" elapse="15" execute_count="3" execute_range="2" fish_id_begin="0" fish_id_range="2" path_index_begin="0" path_index_range="20" delay_time="100" group_pos="1" />
+	
+	<plot name="" type="-1" percent="100" elapse="9" execute_count="3" execute_range="2" fish_id_begin="0" fish_id_range="3" path_index_begin="0" path_index_range="20" delay_time="100" space_time="60" />
+	<plot name="" type="-1" percent="100" elapse="9" execute_count="3" execute_range="3" fish_id_begin="3" fish_id_range="1" path_index_begin="0" path_index_range="20" delay_time="100" space_time="70" />
+	
+	<plot name="" type="-1" percent="100" elapse="13" execute_count="3" execute_range="2" fish_id_begin="2" fish_id_range="1" path_index_begin="0" path_index_range="20" delay_time="100" space_time="60" />
+	<plot name="" type="-1" percent="100" elapse="13" execute_count="3" execute_range="2" fish_id_begin="3" fish_id_range="1" path_index_begin="0" path_index_range="20" delay_time="100" space_time="70" />
+	
+	<plot name="" type="-1" percent="100" elapse="17" execute_count="3" execute_range="2" fish_id_begin="2" fish_id_range="1" path_index_begin="30" path_index_range="15" delay_time="100" space_time="60" />
+	<plot name="" type="-1" percent="100" elapse="17" execute_count="3" execute_range="2" fish_id_begin="3" fish_id_range="2" path_index_begin="30" path_index_range="15" delay_time="100" space_time="70" />
+	<plot name="" type="-1" percent="100" elapse="17" execute_count="4" execute_range="3" fish_id_begin="5" fish_id_range="1" path_index_begin="30" path_index_range="15" delay_time="100" space_time="70" />
+	
+	<plot name="" type="-1" percent="100" elapse="30" execute_count="3" execute_range="2" fish_id_begin="0" fish_id_range="2" path_index_begin="45" path_index_range="6" delay_time="100" space_time="60" />
+	
+	<plot name="" type="-1" percent="100" elapse="21" execute_count="3" execute_range="2" fish_id_begin="0" fish_id_range="2" path_index_begin="60" path_index_range="2" delay_time="0" space_time="60" />
+	
+	<plot name="" type="-1" percent="100" elapse="19" execute_count="3" execute_range="2" fish_id_begin="0" fish_id_range="3" path_index_begin="62" path_index_range="2" delay_time="200" space_time="60" />
+	<plot name="" type="-1" percent="100" elapse="19" execute_count="3" execute_range="2" fish_id_begin="3" fish_id_range="1" path_index_begin="62" path_index_range="2" delay_time="200" space_time="70" />
+
+	<plot name="" type="-1" percent="100" elapse="25" execute_count="3" execute_range="2" fish_id_begin="0" fish_id_range="2" path_index_begin="64" path_index_range="4" delay_time="500" space_time="60" />
+	
+	<plot name="" type="-1" percent="100" elapse="11" execute_count="2" execute_range="3" fish_id_begin="6" fish_id_range="4" path_index_begin="92" path_index_range="4" delay_time="0" space_time="100" />
+	<plot name="" type="-1" percent="100" elapse="11" execute_count="1" execute_range="2" fish_id_begin="10" fish_id_range="4" path_index_begin="96" path_index_range="4" delay_time="0" space_time="100" />
+	<!-- 大鱼 -->
+	<!-- elapse 每多少秒执行一次，  execute_count 几条鱼  delay_time每条记录延时时间  space_time记录中每条鱼之间的间隔-->
+	<!---->
+	<plot name="" type="-1" percent="100" elapse="25" execute_count="1" fish_id_begin="14" fish_id_range="2" path_index_begin="106" path_index_range="6" delay_time="0" space_time="0" />
+	<plot name="" type="-1" percent="100" elapse="30" execute_count="1" fish_id_begin="16" fish_id_range="2" path_index_begin="106" path_index_range="6" delay_time="0" space_time="0" />
+	<plot name="" type="-1" percent="100" elapse="80" execute_count="1" fish_id_begin="18" fish_id_range="1" path_index_begin="112" path_index_range="8" delay_time="0" space_time="1000" />
+	<plot name="" type="-1" percent="100" elapse="70" execute_count="1" fish_id_begin="19" fish_id_range="1" path_index_begin="112" path_index_range="8" delay_time="0" space_time="1000" />
+	<plot name="" type="-1" percent="100" elapse="60" execute_count="1" fish_id_begin="20" fish_id_range="3" path_index_begin="120" path_index_range="10" delay_time="0" space_time="0" />
+	
+	<!-- 红鱼 -->
+	<plot name="" type="-1" percent="100" elapse="20" execute_count="1" fish_id_begin="40" fish_id_range="6" path_index_begin="30" path_index_range="15" delay_time="100" space_time="1000" />
+
+
+
+	<!--200圆圈剧情，type：剧情类型，execute_count：执行次数，param0：一共产生多少圈鱼，param1：每圈产生多少条鱼，param2：X坐标最大范围，param3：Y坐标最大范围-->
+	<plot name="" id="200" type="10" not_normal="1" percent="100" elapse="0" execute_count="1" fish_id_begin="0" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="80" space_time="100"
+	param0="4" param1="30" param2="1440" param3="900" />
+	<!--200圆圈剧情，type：剧情类型，execute_count：执行次数，param0：一共产生多少圈鱼，param1：每圈产生多少条鱼，param2：X坐标最大范围，param3：Y坐标最大范围-->
+	<plot name="" id="201" type="10" not_normal="1" percent="100" elapse="0" execute_count="1" fish_id_begin="1" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="80" space_time="100"
+	param0="4" param1="27" param2="1440" param3="900" />
+	<!--240圆圈剧情，type：剧情类型，execute_count：执行次数，param0：一共产生多少圈鱼，param1：每圈产生多少条鱼，param2：X坐标最大范围，param3：Y坐标最大范围-->
+	<plot name="" id="202" type="10" not_normal="1" percent="100" elapse="0" execute_count="1" fish_id_begin="2" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="80" space_time="100"
+	param0="4" param1="25" param2="1440" param3="900" />
+	<!--320圆圈剧情，type：剧情类型，execute_count：执行次数，param0：一共产生多少圈鱼，param1：每圈产生多少条鱼，param2：X坐标最大范围，param3：Y坐标最大范围-->
+	<plot name="" id="203" type="10" not_normal="1" percent="100" elapse="0" execute_count="1" fish_id_begin="3" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="80" space_time="100"
+	param0="4" param1="17" param2="1440" param3="900" />
+	<!--360圆圈剧情，type：剧情类型，execute_count：执行次数，param0：一共产生多少圈鱼，param1：每圈产生多少条鱼，param2：X坐标最大范围，param3：Y坐标最大范围-->
+	<plot name="" id="204" type="10" not_normal="1" percent="100" elapse="0" execute_count="1" fish_id_begin="4" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="80" space_time="100"
+	param0="4" param1="15" param2="1440" param3="900" />
+	<!--420圆圈剧情，type：剧情类型，execute_count：执行次数，param0：一共产生多少圈鱼，param1：每圈产生多少条鱼，param2：X坐标最大范围，param3：Y坐标最大范围-->
+	<plot name="" id="205" type="10" not_normal="1" percent="100" elapse="0" execute_count="1" fish_id_begin="5" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="80" space_time="100"
+	param0="4" param1="17" param2="1440" param3="900" />
+
+	<!--func：1，在指定坐标放置指定的鱼，param0：x坐标，param1：y坐标，param2：个数-->
+	<!--func：100，将鱼按照指定半径排列，param0：x坐标，param1：y坐标，param2：个数，param3：旋转半径，param4：起始旋转角度，param5：旋转度数，param6：是否改变鱼的角度-->
+	<!--func：101，将鱼按照指定宽度排列，param0：x坐标，param1：y坐标，param2：个数，param3：宽度，param4：y轴随机范围-->
+	<!--func：102，在指定位置产生一圈鱼，param0：x坐标，param1：y坐标，param2：每圈的个数-->
+
+	<!--剧情******************************左右鱼球对冲******************************-->
+	<plot name="右外第一圈" type="0" percent="100" elapse="0" execute_count="1" fish_id_begin="0" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="0" space_time="0"
+	func="100" param0="1340" param1="360" param2="16" param3="240" param4="0" param5="360" param6="0">
+		<point index="0" rotation="-90" movetime="900000009" speed="4" />
+	</plot>
+	<plot name="左外第一圈" type="0" percent="100" elapse="0" execute_count="1" fish_id_begin="0" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="0" space_time="0"
+	func="100" param0="-120" param1="360" param2="16" param3="240" param4="0" param5="360" param6="0">
+		<point index="0" rotation="90" movetime="900000009" speed="4" />
+	</plot>
+	<plot name="右外第二圈" type="0" percent="100" elapse="0" execute_count="1" fish_id_begin="1" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="0" space_time="0"
+	func="100" param0="1340" param1="360" param2="8" param3="160" param4="0" param5="360" param6="0">
+		<point index="0" rotation="-90" movetime="900000009" speed="4" />
+	</plot>
+	<plot name="左外第二圈" type="0" percent="100" elapse="0" execute_count="1" fish_id_begin="1" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="0" space_time="0"
+	func="100" param0="-120" param1="360" param2="8" param3="160" param4="0" param5="360" param6="0">
+		<point index="0" rotation="90" movetime="900000009" speed="4" />
+	</plot>
+	<plot name="右外第三圈" type="0" percent="100" elapse="0" execute_count="5" fish_id_begin="5" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="0" space_time="0"
+	func="100" param0="1340" param1="360" param2="4" param3="70" param4="0" param5="360" param6="0">
+		<point index="0" rotation="-90" movetime="900000009" speed="4" />
+	</plot>
+	<plot name="左外第三圈" type="0" percent="100" elapse="0" execute_count="5" fish_id_begin="5" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="0" space_time="0"
+	func="100" param0="-120" param1="360" param2="4" param3="70" param4="0" param5="360" param6="0">
+		<point index="0" rotation="90" movetime="900000009" speed="4" />
+	</plot>
+
+	<!--剧情******************************中心散发******************************-->
+	<plot name="" type="1" percent="100" elapse="0" execute_count="1" fish_id_begin="0" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="0" space_time="0"
+	func="102" param0="640" param1="360" param2="20" param3="1">
+		<point index="0" rotation="0" movetime="900000009" speed="4" />
+	</plot>
+	<plot name="" type="1" percent="100" elapse="0" execute_count="1" fish_id_begin="1" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="200" space_time="0"
+	func="102" param0="640" param1="360" param2="20" param3="1">
+		<point index="0" rotation="0" movetime="900000009" speed="4" />
+	</plot>
+	<plot name="" type="1" percent="100" elapse="0" execute_count="1" fish_id_begin="2" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="450" space_time="0"
+	func="102" param0="640" param1="360" param2="15" param3="1">
+		<point index="0" rotation="0" movetime="900000009" speed="4" />
+	</plot>
+	<plot name="" type="1" percent="100" elapse="0" execute_count="1" fish_id_begin="3" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="650" space_time="0"
+	func="102" param0="640" param1="360" param2="10" param3="1">
+		<point index="0" rotation="0" movetime="900000009" speed="4" />
+	</plot>
+	<plot name="" type="1" percent="100" elapse="0" execute_count="1" fish_id_begin="5" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="900" space_time="0"
+	func="102" param0="640" param1="360" param2="10" param3="1">
+		<point index="0" rotation="0" movetime="900000009" speed="4" />
+	</plot>
+	<plot name="" type="1" percent="100" elapse="0" execute_count="1" fish_id_begin="8" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="1150" space_time="0"
+	func="102" param0="640" param1="360" param2="8" param3="1">
+		<point index="0" rotation="0" movetime="900000009" speed="4" />
+	</plot>
+
+	<!--两队鱼对冲-->
+	<!--新增剧情，两排2倍鱼，三条金鲨三条银鲨三条蝙蝠三个玉皇大帝三个牛魔王-->
+	<plot name="从下往上" type="2" percent="100" elapse="0" execute_count="1" fish_id_begin="0" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="0" space_time="0"
+	func="101" param0="640" param1="820" param2="50" param3="1280" param4="0">
+		<point index="0" rotation="0" movetime="150" speed="5" />
+		<point index="1" rotation="0" movetime="1700" speed="0" />
+		<point index="2" rotation="0" movetime="900000009" speed="7" />
+	</plot>
+	<plot name="从上往下" type="2" percent="100" elapse="0" execute_count="1" fish_id_begin="0" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="0" space_time="0"
+	func="101" param0="640" param1="-100" param2="50" param3="1280" param4="0">
+		<point index="0" rotation="180" movetime="150" speed="5" />
+		<point index="1" rotation="180" movetime="1700" speed="0" />
+		<point index="2" rotation="180" movetime="900000009" speed="7" />
+	</plot>
+
+	<plot name="" type="2" percent="100" elapse="0" execute_count="1" fish_id_begin="2" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="150" space_time="0"
+	func="1" param0="-100" param1="280" param2="1">
+		<point index="0" rotation="90" movetime="900000009" speed="6" />
+	</plot>
+	<plot name="" type="2" percent="100" elapse="0" execute_count="1" fish_id_begin="2" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="150" space_time="0"
+	func="1" param0="1380" param1="440" param2="1">
+		<point index="0" rotation="-90" movetime="900000009" speed="6" />
+	</plot>
+	<plot name="" type="2" percent="100" elapse="0" execute_count="1" fish_id_begin="2" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="200" space_time="0"
+	func="1" param0="-100" param1="280" param2="1">
+		<point index="0" rotation="90" movetime="900000009" speed="6" />
+	</plot>
+	<plot name="" type="2" percent="100" elapse="0" execute_count="1" fish_id_begin="2" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="200" space_time="0"
+	func="1" param0="1380" param1="440" param2="1">
+		<point index="0" rotation="-90" movetime="900000009" speed="6" />
+	</plot>
+	<plot name="" type="2" percent="100" elapse="0" execute_count="1" fish_id_begin="2" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="250" space_time="0"
+	func="1" param0="-110" param1="280" param2="1">
+		<point index="0" rotation="90" movetime="900000009" speed="6" />
+	</plot>
+	<plot name="" type="2" percent="100" elapse="0" execute_count="1" fish_id_begin="2" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="250" space_time="0"
+	func="1" param0="1380" param1="440" param2="1">
+		<point index="0" rotation="-90" movetime="900000009" speed="6" />
+	</plot>
+
+	<plot name="" type="2" percent="100" elapse="0" execute_count="1" fish_id_begin="11" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="350" space_time="0"
+	func="1" param0="-100" param1="280" param2="1">
+		<point index="0" rotation="90" movetime="900000009" speed="6" />
+	</plot>
+	<plot name="" type="2" percent="100" elapse="0" execute_count="1" fish_id_begin="11" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="350" space_time="0"
+	func="1" param0="1380" param1="440" param2="1">
+		<point index="0" rotation="270" movetime="900000009" speed="6" />
+	</plot>
+	<plot name="" type="2" percent="100" elapse="0" execute_count="1" fish_id_begin="12" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="450" space_time="0"
+	func="1" param0="-100" param1="280" param2="1">
+		<point index="0" rotation="90" movetime="900000009" speed="6" />
+	</plot>
+	<plot name="" type="2" percent="100" elapse="0" execute_count="1" fish_id_begin="12" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="450" space_time="0"
+	func="1" param0="1380" param1="440" param2="1">
+		<point index="0" rotation="270" movetime="900000009" speed="6" />
+	</plot>
+	<plot name="" type="2" percent="100" elapse="0" execute_count="1" fish_id_begin="14" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="600" space_time="0"
+	func="1" param0="-100" param1="280" param2="1">
+		<point index="0" rotation="90" movetime="900000009" speed="6" />
+	</plot>
+	<plot name="" type="2" percent="100" elapse="0" execute_count="1" fish_id_begin="14" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="600" space_time="0"
+	func="1" param0="1380" param1="440" param2="1">
+		<point index="0" rotation="270" movetime="900000009" speed="6" />
+	</plot>
+	<plot name="" type="2" percent="100" elapse="0" execute_count="1" fish_id_begin="16" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="800" space_time="0"
+	func="1" param0="-100" param1="280" param2="1">
+		<point index="0" rotation="90" movetime="900000009" speed="6" />
+	</plot>
+	<plot name="" type="2" percent="100" elapse="0" execute_count="1" fish_id_begin="16" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="800" space_time="0"
+	func="1" param0="1380" param1="440" param2="1">
+		<point index="0" rotation="270" movetime="900000009" speed="6" />
+	</plot>
+	<plot name="" type="2" percent="100" elapse="0" execute_count="1" fish_id_begin="18" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="1050" space_time="0"
+	func="1" param0="-100" param1="280" param2="1">
+		<point index="0" rotation="90" movetime="900000009" speed="6" />
+	</plot>
+	<plot name="" type="2" percent="100" elapse="0" execute_count="1" fish_id_begin="18" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="1050" space_time="0"
+	func="1" param0="1380" param1="440" param2="1">
+		<point index="0" rotation="270" movetime="900000009" speed="6" />
+	</plot>
+
+	<!--不动排列鱼-->
+	<!--新增剧情，两排2倍鱼，三条金鲨三条银鲨三条蝙蝠三个玉皇大帝三个牛魔王-->
+	<plot name="从下往上" type="3" percent="100" elapse="0" execute_count="1" fish_id_begin="1" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="0" space_time="0"
+	func="101" param0="640" param1="820" param2="50" param3="1280" param4="0">
+		<point index="0" rotation="0" movetime="120" speed="6" />
+		<point index="1" rotation="0" movetime="1550" speed="0" />
+		<point index="2" rotation="0" movetime="900000009" speed="7" />
+	</plot>
+	<plot name="从上往下" type="3" percent="100" elapse="0" execute_count="1" fish_id_begin="1" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="0" space_time="0"
+	func="101" param0="640" param1="-100" param2="50" param3="1280" param4="0">
+		<point index="0" rotation="180" movetime="120" speed="6" />
+		<point index="1" rotation="180" movetime="1550" speed="0" />
+		<point index="2" rotation="180" movetime="900000009" speed="7" />
+	</plot>
+
+	<plot name="左半边" type="3" percent="100" elapse="0" execute_count="1" fish_id_begin="3" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="0" space_time="0"
+	func="1" param0="240" param1="200" param2="1">
+		<point index="0" rotation="90" movetime="1200" speed="0" />
+		<point index="1" rotation="0" movetime="900000009" speed="7" />
+	</plot>
+	<plot name="左半边" type="3" percent="100" elapse="0" execute_count="1" fish_id_begin="3" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="0" space_time="0"
+	func="1" param0="340" param1="280" param2="1">
+		<point index="0" rotation="90" movetime="1200" speed="0" />
+		<point index="1" rotation="0" movetime="900000009" speed="7" />
+	</plot>
+	<plot name="左半边" type="3" percent="100" elapse="0" execute_count="1" fish_id_begin="3" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="0" space_time="0"
+	func="1" param0="440" param1="360" param2="1">
+		<point index="0" rotation="90" movetime="1200" speed="0" />
+		<point index="1" rotation="0" movetime="900000009" speed="7" />
+	</plot>
+	<plot name="左半边" type="3" percent="100" elapse="0" execute_count="1" fish_id_begin="3" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="0" space_time="0"
+	func="1" param0="340" param1="440" param2="1">
+		<point index="0" rotation="90" movetime="1200" speed="0" />
+		<point index="1" rotation="0" movetime="900000009" speed="7" />
+	</plot>
+	<plot name="左半边" type="3" percent="100" elapse="0" execute_count="1" fish_id_begin="3" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="0" space_time="0"
+	func="1" param0="240" param1="520" param2="1">
+		<point index="0" rotation="90" movetime="1200" speed="0" />
+		<point index="1" rotation="0" movetime="900000009" speed="7" />
+	</plot>
+
+	<plot name="右半边" type="3" percent="100" elapse="0" execute_count="1" fish_id_begin="3" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="0" space_time="0"
+	func="1" param0="1100" param1="200" param2="1">
+		<point index="0" rotation="-90" movetime="1200" speed="0" />
+		<point index="1" rotation="0" movetime="900000009" speed="7" />
+	</plot>
+	<plot name="右半边" type="3" percent="100" elapse="0" execute_count="1" fish_id_begin="3" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="0" space_time="0"
+	func="1" param0="1000" param1="280" param2="1">
+		<point index="0" rotation="-90" movetime="1200" speed="0" />
+		<point index="1" rotation="0" movetime="900000009" speed="7" />
+	</plot>
+	<plot name="右半边" type="3" percent="100" elapse="0" execute_count="1" fish_id_begin="3" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="0" space_time="0"
+	func="1" param0="900" param1="360" param2="1">
+		<point index="0" rotation="-90" movetime="1200" speed="0" />
+		<point index="1" rotation="0" movetime="900000009" speed="7" />
+	</plot>
+	<plot name="右半边" type="3" percent="100" elapse="0" execute_count="1" fish_id_begin="3" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="0" space_time="0"
+	func="1" param0="1000" param1="440" param2="1">
+		<point index="0" rotation="-90" movetime="1200" speed="0" />
+		<point index="1" rotation="0" movetime="900000009" speed="7" />
+	</plot>
+	<plot name="右半边" type="3" percent="100" elapse="0" execute_count="1" fish_id_begin="3" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="0" space_time="0"
+	func="1" param0="1100" param1="520" param2="1">
+		<point index="0" rotation="-90" movetime="1200" speed="0" />
+		<point index="1" rotation="0" movetime="900000009" speed="7" />
+	</plot>
+
+	<plot name="左BOSS" type="3" percent="100" elapse="0" execute_count="1" fish_id_begin="15" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="0" space_time="0"
+	func="1" param0="640" param1="440" param2="1">
+		<point index="0" rotation="90" movetime="1200" speed="0" />
+		<point index="1" rotation="0" movetime="900000009" speed="7" />
+	</plot>
+	<plot name="右BOSS" type="3" percent="100" elapse="0" execute_count="1" fish_id_begin="15" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="0" space_time="0"
+	func="1" param0="640" param1="280" param2="1">
+		<point index="0" rotation="-90" movetime="1200" speed="0" />
+		<point index="1" rotation="0" movetime="900000009" speed="7" />
+	</plot>
+
+
+	<!--剧情金龙鱼-->
+	<!--外圈-->
+	<!--func：100，将鱼按照指定半径排列，param0：x坐标，param1：y坐标，param2：个数，param3：旋转半径，param4：起始旋转角度，param5：旋转度数，param6：是否改变鱼的角度-->
+	<plot name="右外第一圈" type="4" percent="100" elapse="0" execute_count="1" fish_id_begin="0" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="0" space_time="0"
+	func="100" param0="960" param1="360" param2="50" param3="270" param4="0" param5="360" param6="1">
+		<point index="0" rotation="0" movetime="1500" speed="0" />
+		<point index="1" rotation="0" movetime="900000009" speed="4" />
+	</plot>
+	<plot name="左外第一圈" type="4" percent="100" elapse="0" execute_count="1" fish_id_begin="1" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="0" space_time="0"
+	func="100" param0="320" param1="360" param2="50" param3="270" param4="0" param5="360" param6="1">
+		<point index="0" rotation="0" movetime="1500" speed="0" />
+		<point index="1" rotation="0" movetime="900000009" speed="4" />
+	</plot>
+	<plot name="右外第二圈" type="4" percent="100" elapse="0" execute_count="1" fish_id_begin="3" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="0" space_time="0"
+	func="100" param0="960" param1="360" param2="25" param3="200" param4="0" param5="360" param6="1">
+		<point index="0" rotation="0" movetime="1700" speed="0" />
+		<point index="1" rotation="0" movetime="900000009" speed="4" />
+	</plot>
+	<plot name="左外第二圈" type="4" percent="100" elapse="0" execute_count="1" fish_id_begin="2" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="0" space_time="0"
+	func="100" param0="320" param1="360" param2="25" param3="220" param4="0" param5="360" param6="1">
+		<point index="0" rotation="0" movetime="1700" speed="0" />
+		<point index="1" rotation="0" movetime="900000009" speed="4" />
+	</plot>
+	<plot name="右外第三圈" type="4" percent="100" elapse="0" execute_count="1" fish_id_begin="5" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="0" space_time="0"
+	func="100" param0="960" param1="360" param2="15" param3="120" param4="0" param5="360" param6="1">
+		<point index="0" rotation="0" movetime="1900" speed="0" />
+		<point index="1" rotation="0" movetime="900000009" speed="4" />
+	</plot>
+	<plot name="左外第三圈" type="4" percent="100" elapse="0" execute_count="1" fish_id_begin="4" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="0" space_time="0"
+	func="100" param0="320" param1="360" param2="15" param3="150" param4="0" param5="360" param6="1">
+		<point index="0" rotation="0" movetime="1900" speed="0" />
+		<point index="1" rotation="0" movetime="900000009" speed="4" />
+	</plot>
+	<!--内圈-->
+	<!--单个鱼-->
+	<plot name="左边BOSS" type="4" percent="100" elapse="0" execute_count="1" fish_id_begin="17" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="0" space_time="0"
+	func="1" param0="320" param1="360" param2="1">
+		<point index="0" rotation="90" movetime="2100" speed="0" />
+		<point index="1" rotation="0" movetime="900000009" speed="4" />
+	</plot>
+	<plot name="右边BOSS" type="4" percent="100" elapse="0" execute_count="1" fish_id_begin="17" fish_id_range="1" path_index_begin="-1" path_index_range="1" delay_time="0" space_time="0"
+	func="1" param0="960" param1="360" param2="1">
+		<point index="0" rotation="-90" movetime="2100" speed="0" />
+		<point index="1" rotation="0" movetime="900000009" speed="4" />
+	</plot>
+
+</server>
