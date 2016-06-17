@@ -154,6 +154,8 @@ struct CMD_GP_MobileCaptchaVerific
 //szMachineID里保存的是手机的机器码
 //szPassPortID里保存的是渠道字符串
 
+#define DTP_GP_CLIENTIDFA 103
+
 struct DTP_GP_Password
 {
 	WORD wCount;
@@ -278,6 +280,8 @@ struct CMD_GP_LoginingInfo
 
 #define DTP_GP_SERVER_INFO			30//游戏房间信息
 #define DTP_GP_CHARGE1ST_INFO		31
+
+#define DTP_GP_PASS_PORT_ID			32
 
 struct DTP_GP_Charge1stInfo
 {
@@ -667,6 +671,9 @@ struct CMD_GPO_BroadLaba
 
 //#define SUB_GR_MATCH_GET_MATCH_PRIZE		652							//用户领取奖励
 //#define SUB_GR_MATCH_GET_MATCH_PRIZE_RES	653							//用户领取奖励结果
+
+#define SUB_GP_BUY_SKILL		652										//金币兑换技能
+#define SUB_GP_BUY_SKILL_RESULT		653									//金币兑换技能结果
 
 struct CMD_GPO_ShareInfo
 {
@@ -1066,6 +1073,22 @@ struct CMD_GP_OperateSuccess
 	LONG							lResultCode;						//操作代码
 	TCHAR							szDescribeString[128];				//成功消息
 };
+
+struct CMD_GPR_BuySkill
+{
+	DWORD dwUserID;
+	BYTE cbSkillID;
+	int nCount;
+};
+
+//struct CMD_GPO_BuySkill_Result
+//{
+//	bool bSuccess;
+//	BYTE cbSkillID;
+//	int nCount;
+//	SCORE llScore;
+//	TCHAR szDescribeString[128];				
+//};
 
 //////////////////////////////////////////////////////////////////////////////////
 //远程服务

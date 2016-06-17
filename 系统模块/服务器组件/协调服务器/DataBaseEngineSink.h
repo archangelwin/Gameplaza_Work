@@ -98,6 +98,10 @@ public:
 	bool OnRequestLoadMatchConfig(DWORD dwContextID, VOID * pData, WORD wDataSize);
 
 	bool OnRequestSaveMatchResult(DWORD dwContextID, VOID * pData, WORD wDataSize);
+
+	bool OnRequestGetSqlTime(DWORD dwContextID, VOID * pData, WORD wDataSize);
+
+	void OnRecord(CString strMsg);
 };
 
 //////////////////////////////////////////////////////////////////////////////////

@@ -485,6 +485,7 @@ bool CDataBaseEngineSink::OnDataBaseEngineRequest(WORD wRequestID, DWORD dwConte
 	case DBR_GP_GET_NEWMAIL_REMIND:
 		{
 			return OnRequestGetNewMailRemind(dwContextID,pData,wDataSize);
+		}
 	case DBR_GP_QUERY_FREE_LABA_COUNT:
 		{
 			return OnRequestQueryFreeLabaCount(dwContextID,pData,wDataSize);
@@ -493,7 +494,10 @@ bool CDataBaseEngineSink::OnDataBaseEngineRequest(WORD wRequestID, DWORD dwConte
 		{
 			return OnRequestGetMatchPirze(dwContextID,pData,wDataSize);
 		}
-	}
+	case DBR_GP_BUY_SKILL:
+		{
+			return OnRequestBuySkill(dwContextID,pData,wDataSize);
+		}
 	}
 
 	return false;
@@ -785,6 +789,7 @@ bool CDataBaseEngineSink::OnRequestRegisterAccounts(DWORD dwContextID, VOID * pD
 		m_AccountsDBAide.AddParameter(TEXT("@strMachineID"),pRegisterAccounts->szMachineID);
 		m_AccountsDBAide.AddParameter(TEXT("@bIsGuestReg"),0);
 		m_AccountsDBAide.AddParameter(TEXT("@AgentID"),pRegisterAccounts->dwAgentID);
+		m_AccountsDBAide.AddParameter(TEXT("@szIDFA"),pRegisterAccounts->szIDFA);
 
 		//输出参数
 		TCHAR szDescribeString[128]=TEXT("");
@@ -1009,6 +1014,7 @@ LONG CDataBaseEngineSink::InsGuestRegInfo(DBR_GP_RegisterAccounts* pGuestRegInfo
 		m_AccountsDBAide.AddParameter(TEXT("@strMachineID"),pGuestRegInfo->szMachineID);
 		m_AccountsDBAide.AddParameter(TEXT("@bIsGuestReg"),1);
 		m_AccountsDBAide.AddParameter(TEXT("@AgentID"),0);
+		m_AccountsDBAide.AddParameter(TEXT("@szIDFA"),pGuestRegInfo->szIDFA);
 
 		//输出参数
 		TCHAR szDescribeString[128]=TEXT("");
@@ -2693,6 +2699,7 @@ VOID CDataBaseEngineSink::OnLogonDisposeResult(DWORD dwContextID, DWORD dwErrorC
 			LogonSuccess.nCanShare = m_AccountsDBAide.GetValue_LONG("CanShare");
 			LogonSuccess.cbCanGetBankruptcy = m_AccountsDBAide.GetValue_BYTE("CanGetBankruptcy");
 			LogonSuccess.nBankruptcyCount = m_AccountsDBAide.GetValue_LONG("BankruptcyCount");
+			m_AccountsDBAide.GetValue_String(TEXT("PassPortID"), LogonSuccess.szPassPortID, CountArray(LogonSuccess.szPassPortID));
 
 			//获取信息
 			lstrcpyn(LogonSuccess.szDescribeString,pszErrorString,CountArray(LogonSuccess.szDescribeString));
@@ -2738,6 +2745,7 @@ VOID CDataBaseEngineSink::OnLogonDisposeResult(DWORD dwContextID, DWORD dwErrorC
 			LogonSuccess.nLogonGift = m_AccountsDBAide.GetValue_LONG("logonGift");
 
 			LogonSuccess.nCanShare = m_AccountsDBAide.GetValue_LONG("CanShare");
+			m_AccountsDBAide.GetValue_String(TEXT("PassPortID"), LogonSuccess.szPassPortID, CountArray(LogonSuccess.szPassPortID));
 
 			//获取信息
 			lstrcpyn(LogonSuccess.szDescribeString,"",CountArray(LogonSuccess.szDescribeString));
@@ -4408,6 +4416,7 @@ bool CDataBaseEngineSink::OnRequestMBRegister(DWORD dwContextID, VOID * pData, W
 		m_AccountsDBAide.AddParameter(TEXT("@bIsGuestReg"),0);
 		m_AccountsDBAide.AddParameter(TEXT("@AgentID"),pRegisterAccounts->dwAgentID);
 		m_AccountsDBAide.AddParameter(TEXT("@bIsMobileReg"),1);
+		m_AccountsDBAide.AddParameter(TEXT("@szIDFA"),pRegisterAccounts->szIDFA);
 
 		//输出参数
 		TCHAR szDescribeString[128]=TEXT("");
@@ -4921,6 +4930,8 @@ bool CDataBaseEngineSink::OnRequestBroadCastLaBa(DWORD dwContextID, VOID * pData
 		//构造参数
 		m_TreasureDBAide.ResetParameter();
 		m_TreasureDBAide.AddParameter(TEXT("@UserID"),pRequstInfo->dwUserId);
+		m_TreasureDBAide.AddParameter(TEXT("@IsInGame"),0);
+		m_TreasureDBAide.AddParameter(TEXT("@llUserScoreInGame"),0);
 		//输出参数
 		TCHAR szDescribeString[128]=TEXT("");
 		m_TreasureDBAide.AddParameterOutput(TEXT("@strErrorDescribe"),szDescribeString,sizeof(szDescribeString),adParamOutput);
@@ -5268,7 +5279,8 @@ bool CDataBaseEngineSink::OnRequestGetMatchPirze(DWORD dwContextID, VOID * pData
 			pMatchGetPrize->bPriseStatus = false;
 		}
 		pMatchGetPrize->nPriseCount=m_TreasureDBAide.GetValue_LONG(TEXT("RewardGold"));
-		pMatchGetPrize->nPriseType=m_TreasureDBAide.GetValue_LONG(TEXT("MatchType"));
+		//pMatchGetPrize->nPriseType=m_TreasureDBAide.GetValue_LONG(TEXT("MatchType"));
+		pMatchGetPrize->nPriseType=1;
 		pMatchGetPrize->lluserScore=m_TreasureDBAide.GetValue_LONGLONG(TEXT("Score"));
 		m_pIDataBaseEngineEvent->OnEventDataBaseResult(DBO_GR_MATCH_GET_PRIZE,dwContextID,pMatchGetPrize,sizeof(DBO_GR_Match_Get_Prize));
 	}
@@ -5276,6 +5288,63 @@ bool CDataBaseEngineSink::OnRequestGetMatchPirze(DWORD dwContextID, VOID * pData
 	{
 		//错误信息
 		CTraceService::TraceString(TEXT("GSP_GP_Get_Match_Prize"),TraceLevel_Exception);
+		CTraceService::TraceString(pIException->GetExceptionDescribe(),TraceLevel_Exception);
+	}
+
+	return true;
+}
+
+bool CDataBaseEngineSink::OnRequestBuySkill(DWORD dwContextID, VOID * pData, WORD wDataSize)
+{
+	if (wDataSize!=sizeof(DBR_GP_Buy_Skill)) return false;
+
+	//变量定义
+	DBO_GP_Buy_Skill_Res stBuySkillRes;
+	ZeroMemory(&stBuySkillRes,sizeof(stBuySkillRes));
+
+	//解析信息
+	DBR_GP_Buy_Skill * pBuySkill = (DBR_GP_Buy_Skill *)pData;
+	try
+	{
+
+		//执行查询
+		m_TreasureDBAide.ResetParameter();
+		m_TreasureDBAide.AddParameter(TEXT("@UserID"), pBuySkill->dwUserID);
+		m_TreasureDBAide.AddParameter(TEXT("@IsInGame"), 0);
+		m_TreasureDBAide.AddParameter(TEXT("@nSkillID"), pBuySkill->nSkillID);
+		m_TreasureDBAide.AddParameter(TEXT("@nCount"), pBuySkill->nCount);
+		m_TreasureDBAide.AddParameter(TEXT("@llUserScoreInGame"), 0);
+		TCHAR szDescribeString[128]=TEXT("");
+		m_TreasureDBAide.AddParameterOutput(TEXT("@strErrorDescribe"),szDescribeString,sizeof(szDescribeString),adParamOutput);
+
+		//执行查询
+		LONG lResultCode=m_TreasureDBAide.ExecuteProcess(TEXT("GSP_GP_Buy_Skill"),true);
+
+		//结果处理
+		CDBVarValue DBVarValue;
+		m_TreasureDBModule->GetParameter(TEXT("@strErrorDescribe"),DBVarValue);
+
+		DBO_GP_Buy_Skill_Res  stBuySkillRes={0};
+		//结果处理
+		if(lResultCode==0)
+		{
+			//读取数据
+			stBuySkillRes.bSuccess = true;
+		}
+		else
+		{
+			stBuySkillRes.bSuccess = false;
+		}
+		stBuySkillRes.cbSkillID=m_TreasureDBAide.GetValue_LONG(TEXT("nSkillID"));
+		stBuySkillRes.nCount=m_TreasureDBAide.GetValue_LONG(TEXT("nCount"));
+		stBuySkillRes.llScore=m_TreasureDBAide.GetValue_LONGLONG(TEXT("Score"));
+		lstrcpyn(stBuySkillRes.szDescribeString,CW2CT(DBVarValue.bstrVal),sizeof(stBuySkillRes.szDescribeString));
+		m_pIDataBaseEngineEvent->OnEventDataBaseResult(DBO_GP_BUY_SKILL,dwContextID,&stBuySkillRes,sizeof(DBO_GP_Buy_Skill_Res));
+	}
+	catch (IDataBaseException * pIException)
+	{
+		//错误信息
+		CTraceService::TraceString(TEXT("GSP_GP_Buy_Skill"),TraceLevel_Exception);
 		CTraceService::TraceString(pIException->GetExceptionDescribe(),TraceLevel_Exception);
 	}
 

@@ -156,6 +156,8 @@ public:
 tagSignInDayInfo m_NormalUserRewardConfig[7];
 tagSignInDayInfo m_VIPUserRewardConfig[7];
 
+	// fake server info
+	WORD							m_wSendFakeInfoInterval;
 	//函数定义
 public:
 	//构造函数

@@ -215,6 +215,8 @@ bool CServerInfoManager::LoadGameServerInfo(TCHAR szMachineID[LEN_MACHINE_ID], C
 
 			//插入列表
 			ServerInfoBuffer.InsertServerInfo(&GameServerResult);
+			printf("Load GameServer Info ServerID %d, Server Name is %s, GameName is %s, Dll name is %s\n", 
+				GameServerResult.wServerID, GameServerResult.szGameName, GameServerResult.szServerName, GameServerResult.szServerDLLName);
 
 			//移动记录
 			m_PlatformDBModule->MoveToNext();

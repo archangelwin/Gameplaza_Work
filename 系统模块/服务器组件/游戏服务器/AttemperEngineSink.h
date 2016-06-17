@@ -69,6 +69,7 @@ struct tagMatchConfigItem
 	int nMatchUserCount;
 	int nGameTime;
 	int nMatchType;
+	TCHAR szMatchName[128];
 };
 
 struct tagMatchRewardConfigItem
@@ -78,6 +79,8 @@ struct tagMatchRewardConfigItem
 	int nReward[10];
 	int nMachType;
 	int nShareType;
+	TCHAR szRewardIntro[128];
+	TCHAR szShareIntro[128];
 };
 
 //数组说明
@@ -170,10 +173,7 @@ public:
 	int								m_lBigRewardAddRandNum;					//巨奖随机范围
 	int								m_nSignUpCost;							//报名比赛的费用
 	int								m_nTeamMemberNum;						//每个队伍的成员
-	int								m_nMessageRemindTime1;					//距离比赛开始信息展示提醒时间1
-	int								m_nMessageRemindTime2;					//距离比赛开始信息展示提醒时间2
-	int								m_nMessageRemindTime3;					//距离比赛开始信息展示提醒时间3
-	int								m_nMatchBeginRemindTime;				//距离比赛开始提醒时间
+	int								m_nNewPlayerServerId;					//新手房serverid
 // 比赛用变量
 	std::vector<std::vector<tagMatchUserInfoGameServer> > m_vMatchUserInfo;	//本服务器保存的比赛用户的记录
 	bool							m_bMatchSignUpMark;						//比赛报名是否开始的标记
@@ -317,7 +317,10 @@ protected:
 	bool OnDBGetUserLucky(DWORD dwContextID, VOID * pData, WORD wDataSize);
 	//比赛报名结果
 	bool OnUserMatchSignUPRes(DWORD dwContextID, VOID * pData, WORD wDataSize);
-
+	//购买技能
+	bool OnBuySkillRes(DWORD dwContextID, VOID * pData, WORD wDataSize);
+	//广播喇叭
+	bool OnBroadLabaRes(DWORD dwContextID, VOID * pData, WORD wDataSize);
 	//连接处理
 protected:
 	//注册事件
@@ -430,6 +433,12 @@ protected:
 	bool OnTCPNetworkSubMatchSignUP(VOID * pData, WORD wDataSize, DWORD dwSocketID);
 	//获得比赛奖励
 	bool OnTCPNetworkSubMatchGetPrize(VOID * pData, WORD wDataSize, DWORD dwSocketID);
+	//获取分享说明和链接
+	bool OnTCPNetworkSubMatchGetShare(VOID * pData, WORD wDataSize, DWORD dwSocketID);
+	//购买技能
+	bool OnTCPNetworkSubBuySkill(VOID * pData, WORD wDataSize, DWORD dwSocketID);
+	//广播喇叭
+	bool OnTCPNetworkSubBroadLaBa(VOID * pData, WORD wDataSize, DWORD dwSocketID);
 	//内部事件
 protected:
 	//用户登录
@@ -535,6 +544,8 @@ public:
 	void SaveUserItemCount(IServerUserItem * pIServerUserItem, int nType, SCORE lCount);
 	//获得巨奖
 	virtual bool OnWinBigReward(IServerUserItem * pIServerUserItem,int nScore);
+	//修改背包
+	virtual bool ModifyBackpack(IServerUserItem * pIServerUserItem, BYTE cbType, int nChange);
 	//设置藏宝图数量
 	virtual void SetTreasureMapCount(IServerUserItem * pIServerUserItem,int nCount);
 	//设置玩家kValue值
@@ -546,9 +557,13 @@ public:
 	virtual void UpdateUserIntegrate(IServerUserItem * pIServerUserItem,int nAddScore);
 	//获取用户比赛奖励信息
 	void GetUserMatchRewardInfo(tagMatchRewardConfigItem & MatchConfigItem,int Rank,int nMatchType);
+	//获取指定matchNum对应的比赛信息
+	void GetMatchInfoByMatchId(tagMatchConfigItem & MatchConfigItem,int nMatchId);
 	//设置优先填充的桌子
 protected:
 	VOID AndriodSitTableAssign();
+
+	void OnRecord(CString strMsg);
 
 };
 

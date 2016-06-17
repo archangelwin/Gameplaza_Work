@@ -209,6 +209,9 @@ protected:
 	bool OnRequestUserMaxKValue(DWORD dwContextID, VOID * pData, WORD wDataSize, DWORD &dwUserID);
 	bool OnRequestUserMatchSignUP(DWORD dwContextID, VOID * pData, WORD wDataSize, DWORD &dwUserID);
 	bool OnRequestGetMatchPirze(DWORD dwContextID, VOID * pData, WORD wDataSize, DWORD &dwUserID);
+	bool OnRequestUserModifyBackpack(DWORD dwContextID, VOID * pData, WORD wDataSize, DWORD &dwUserID);
+	bool OnRequestBuySkill(DWORD dwContextID, VOID * pData, WORD wDataSize, DWORD &dwUserID);
+	bool OnRequestBroadCastLaBa(DWORD dwContextID, VOID * pData, WORD wDataSize, DWORD &dwUserID);
 	//银行服务
 protected:
 	//存入游戏币

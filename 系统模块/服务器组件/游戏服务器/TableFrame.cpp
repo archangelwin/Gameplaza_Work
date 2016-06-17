@@ -1058,43 +1058,43 @@ bool CTableFrame::OnEventUserOffLine(IServerUserItem * pIServerUserItem)
 	ASSERT(pIServerUserItem!=NULL);
 	if (pIServerUserItem==NULL) return false;
 
- 	//用户变量
- 	tagUserInfo * pUserInfo=pIServerUserItem->GetUserInfo();
- 	IServerUserItem * pITableUserItem=m_TableUserItemArray[pUserInfo->wChairID];
+ 	////用户变量
+ 	//tagUserInfo * pUserInfo=pIServerUserItem->GetUserInfo();
+ 	//IServerUserItem * pITableUserItem=m_TableUserItemArray[pUserInfo->wChairID];
  
- 	//用户属性
- 	WORD wChairID=pIServerUserItem->GetChairID();
- 	BYTE cbUserStatus=pIServerUserItem->GetUserStatus();
+ 	////用户属性
+ 	//WORD wChairID=pIServerUserItem->GetChairID();
+ 	//BYTE cbUserStatus=pIServerUserItem->GetUserStatus();
  
- 	//游戏用户
- 	if (cbUserStatus!=US_LOOKON)
- 	{
- 		//效验用户
- 		ASSERT(pIServerUserItem==GetTableUserItem(wChairID));
- 		if (pIServerUserItem!=GetTableUserItem(wChairID)) return false;
+ 	////游戏用户
+ 	//if (cbUserStatus!=US_LOOKON)
+ 	//{
+ 	//	//效验用户
+ 	//	ASSERT(pIServerUserItem==GetTableUserItem(wChairID));
+ 	//	if (pIServerUserItem!=GetTableUserItem(wChairID)) return false;
  
- 		//断线处理
- 		if ((cbUserStatus==US_PLAYING)&&(m_wOffLineCount[wChairID]<MAX_OFF_LINE))
- 		{
- 			//用户设置
- 			pIServerUserItem->SetClientReady(false);
- 			pIServerUserItem->SetUserStatus(US_OFFLINE,m_wTableID,wChairID);
+ 	//	//断线处理
+ 	//	if ((cbUserStatus==US_PLAYING)&&(m_wOffLineCount[wChairID]<MAX_OFF_LINE))
+ 	//	{
+ 	//		//用户设置
+ 	//		pIServerUserItem->SetClientReady(false);
+ 	//		pIServerUserItem->SetUserStatus(US_OFFLINE,m_wTableID,wChairID);
  
- 			//断线处理
- 			if (m_dwOffLineTime[wChairID]==0L)
- 			{
- 				//设置变量
- 				m_wOffLineCount[wChairID]++;
- 				m_dwOffLineTime[wChairID]=(DWORD)time(NULL);
+ 	//		//断线处理
+ 	//		if (m_dwOffLineTime[wChairID]==0L)
+ 	//		{
+ 	//			//设置变量
+ 	//			m_wOffLineCount[wChairID]++;
+ 	//			m_dwOffLineTime[wChairID]=(DWORD)time(NULL);
  
- 				//时间设置
- 				WORD wOffLineCount=GetOffLineUserCount();
- 				if (wOffLineCount==1) SetGameTimer(IDI_OFF_LINE,TIME_OFF_LINE,1,wChairID);
- 			}
+ 	//			//时间设置
+ 	//			WORD wOffLineCount=GetOffLineUserCount();
+ 	//			if (wOffLineCount==1) SetGameTimer(IDI_OFF_LINE,TIME_OFF_LINE,1,wChairID);
+ 	//		}
  
- 			return true;
- 		}
- 	}
+ 	//		return true;
+ 	//	}
+ 	//}
 
 	//用户起立
 	PerformStandUpAction(pIServerUserItem);
@@ -2649,6 +2649,7 @@ bool CTableFrame::OnWinPearl(IServerUserItem * pIServerUserItem, int nPearlType,
 	return m_pITableFrameSink->OnWinPearl(pIServerUserItem, nPearlType, nPearlCount);
 }
 
+
 //发送比赛积分
 bool CTableFrame::SendMatchScore(IServerUserItem * pIServerUserItem, SCORE lMatchScore)
 {
@@ -2748,5 +2749,25 @@ bool CTableFrame::OnWinBigReward(IServerUserItem * pIServerUserItem,int nScore)
 	}
 
 	return m_pIMainServiceFrame->OnWinBigReward(pIServerUserItem,nScore);
+}
+
+//修改背包
+bool CTableFrame::ModifyBackpack(IServerUserItem * pIServerUserItem, BYTE cbType, int nChange)
+{
+	return m_pIMainServiceFrame->ModifyBackpack(pIServerUserItem, cbType, nChange);
+}
+
+
+//在比赛中扣除报名费用
+bool CTableFrame::OnChangeMatchPlayerScore(IServerUserItem * pIServerUserItem, int wSignUpFee, WORD wChairID, SCORE &llUserScore)
+{
+	//printf("second: Sign Up fee is %d\n", wSignUpFee);
+	return m_pITableFrameSink->OnChangeMatchPlayerScore(pIServerUserItem, wSignUpFee, wChairID, llUserScore);
+}
+
+void CTableFrame::SetMatchStatus(bool bPlaying)
+{
+	//printf("second: Sign Up fee is %d\n", wSignUpFee);
+	return m_pITableFrameSink->SetMatchStatus(bPlaying);
 }
 //////////////////////////////////////////////////////////////////////////////////

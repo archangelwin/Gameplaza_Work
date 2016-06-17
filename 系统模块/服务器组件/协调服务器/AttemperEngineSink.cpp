@@ -12,9 +12,11 @@ char *  g_pszFakeName[] = {"速战速决","光辉岁月","因帅被判无妻","闲情逸致","不懂
 #define IDI_TIMER_CHECK_INTERVAL	13			//比赛时间检测
 #define IDI_READ_MATCH_CONFIG		14			//读取比赛配置
 #define IDI_MATCH_BEGIN_REMINDER		15			//比赛开始倒计时
-#define IDI_MATCH_END_REMINDER		16			//比赛结束倒计时
+#define IDI_MATCH_BEGIN		16			//比赛开始
+#define IDI_MATCH_END_REMINDER		17			//比赛结束倒计时
 #define IDI_MATCH_END		18			//比赛结束
-#define IDI_TIMER_LOAD_MATCH_CONFIG	17			//比赛配置读取
+#define IDI_TIMER_LOAD_MATCH_CONFIG	19			//比赛配置读取
+#define IDI_TIMER_SEND_FAKE_SERVERINFO	20		//send fake server info
 
 bool compareMatchRank(tagMatchRankInfo & obj1, tagMatchRankInfo & obj2)
 {
@@ -198,16 +200,16 @@ CAttemperEngineSink::CAttemperEngineSink()
 
 	m_bInitLotteryInfo = false;
 	m_nCurrentMatchID = 0;
-
+	m_nDifferentTime = 0;
 	m_vMatchData.clear();
 	m_vMatchGameServerID.clear();
 
 	// Initialize GameServerInfo
-	m_vMatchGameServerID.resize(100);
+	m_vMatchGameServerID.resize(300);
 	memset(m_IsRemind,0,sizeof(m_IsRemind));
 	// Initialize the 3 dimension vector
-	m_vMatchData.resize(100);  
-	for (int i=0; i < 100; i ++ )
+	m_vMatchData.resize(300);  
+	for (int i=0; i < 300; i ++ )
 	{
 		m_vMatchData[i].resize(100);
 		//for (int j = 0; j < 100; j++)
@@ -220,7 +222,12 @@ CAttemperEngineSink::CAttemperEngineSink()
 	m_wGroupCnt = 0;
 	m_CurrentFakeNameNum = 0;
 	m_wAndroidFakeNameCnt = sizeof(g_pszFakeName)/sizeof(*g_pszFakeName);
+	m_bIsGameBegin = false;
 	printf ("the number of the Fake name is %d\n", m_wAndroidFakeNameCnt);
+
+	// Fake server info time interval
+	//m_wSendFakeInfoInterval = 30000;
+
 	return;
 }
 
@@ -440,14 +447,30 @@ bool CAttemperEngineSink::OnAttemperEngineStart(IUnknownEx * pIUnknownEx)
 	InitLotteryInfo();
 
 	m_pITimerEngine->SetTimer(IDI_LOTTERY_INFO,1000,TIMES_INFINITY,NULL);
-	m_pITimerEngine->SetTimer(IDI_PEARL,1000,TIMES_INFINITY,NULL);
+	//m_pITimerEngine->SetTimer(IDI_PEARL,m_wSendFakeInfoInterval,TIMES_INFINITY,NULL);
+	// fake GameServer info
+	m_pITimerEngine->SetTimer(IDI_TIMER_SEND_FAKE_SERVERINFO,1000,TIMES_INFINITY,NULL);
 
 	//read match info here.
 	//max group, max number in each group
 	m_pITimerEngine->SetTimer(IDI_READ_MATCH_CONFIG,60000,(DWORD)(-1),NULL);
-	m_pITimerEngine->SetTimer(IDI_TIMER_CHECK_INTERVAL,5000,(DWORD)(-1),NULL);
+	m_pITimerEngine->SetTimer(IDI_TIMER_CHECK_INTERVAL,1000,(DWORD)(-1),NULL);
 	m_pITimerEngine->SetTimer(IDI_TIMER_LOAD_MATCH_CONFIG,3000,1,NULL);
+	TCHAR szPath[MAX_PATH]=TEXT("");
+	TCHAR szConfigFileName[MAX_PATH] = TEXT("");
+	GetCurrentDirectory(sizeof(szPath),szPath);
+	_sntprintf(szConfigFileName,sizeof(szConfigFileName),TEXT("%s\\GameMatchConfig.ini"),szPath);
 
+	//读取配置
+	TCHAR szServerName[MAX_PATH]=TEXT("");
+	m_nMessageRemindTime1 = GetPrivateProfileInt(TEXT("MatchConfig"),TEXT("MessageRemindTime1"),5,szConfigFileName);
+	m_nMessageRemindTime2 = GetPrivateProfileInt(TEXT("MatchConfig"),TEXT("MessageRemindTime2"),3,szConfigFileName);
+	m_nMessageRemindTime3 = GetPrivateProfileInt(TEXT("MatchConfig"),TEXT("MessageRemindTime3"),1,szConfigFileName);
+	m_nMatchBeginRemindTime = GetPrivateProfileInt(TEXT("MatchConfig"),TEXT("MatchBeginRemindTime"),5,szConfigFileName);
+	m_nNewPlayerServerId = GetPrivateProfileInt(TEXT("MatchConfig"),TEXT("NewPlayerServerId"),309,szConfigFileName);
+	m_nHundredServerId = GetPrivateProfileInt(TEXT("MatchConfig"),TEXT("HundredServerId"),315,szConfigFileName);
+	m_nThousandServerId = GetPrivateProfileInt(TEXT("MatchConfig"),TEXT("ThousandServerId"),316,szConfigFileName);
+	m_nTenThousandServerId = GetPrivateProfileInt(TEXT("MatchConfig"),TEXT("TenThousandServerId"),317,szConfigFileName);
 	return true;
 }
 
@@ -519,7 +542,7 @@ bool CAttemperEngineSink::OnEventTimer(DWORD dwTimerID, WPARAM wBindParam)
 				if (LotteryInfo.nSendSecond <= nCurrentSecond)
 				{
 					nSelectIndex = i;
-					printf("发奖时间 %d\n", nCurrentSecond);
+					//printf("发奖时间 %d\n", nCurrentSecond);
 					break;
 				}
 			}
@@ -560,58 +583,57 @@ bool CAttemperEngineSink::OnEventTimer(DWORD dwTimerID, WPARAM wBindParam)
 		{
 			SYSTEMTIME st;
 			GetLocalTime(&st);
-			if (st.wHour==23&&st.wMinute==59)
+			if (st.wHour==23&&st.wMinute==58&&st.wSecond==59)
 			{
 				//加载比赛配置
-				m_pIDataBaseEngine->PostDataBaseRequest(0L,DBR_GR_LOAD_MATCH_CONFIG,NULL,0L);
+				m_pIDataBaseEngine->PostDataBaseRequest(DBR_GR_LOAD_MATCH_CONFIG,0,NULL,0L);
+				m_pIDataBaseEngine->PostDataBaseRequest(DBR_GR_GET_SQL_TIME,0,NULL,0);
 			}
 			tagMatchConfigItem sMatchConfigItem={0};
 			GetNextMatchInfo(sMatchConfigItem);
 			int nMatchStartTimeHour = sMatchConfigItem.nStartTime/100;
 			int nMatchStartTimeMinute = sMatchConfigItem.nStartTime%100;
 
-			int nMatchStartTime = (sMatchConfigItem.nStartTime)/100 * 60 + (sMatchConfigItem.nStartTime)%100;
-			int nCurrentTime = st.wHour * 60 + st.wMinute;
+			int nMatchStartTime = 60 * ((sMatchConfigItem.nStartTime)/100 * 60 + (sMatchConfigItem.nStartTime)%100 ); //以秒为单位
+			int nCurrentTime = 60*(st.wHour * 60 + st.wMinute)+ st.wSecond - m_nDifferentTime;
 			int nDiffTime = nMatchStartTime - nCurrentTime;
 			MatchNotification stMatchNotification = {0};
 			stMatchNotification.nMatchID = sMatchConfigItem.nMatchNum;
-			stMatchNotification.nMatchPeopleNum = sMatchConfigItem.nMatchNum;
+			stMatchNotification.nMatchPeopleNum = sMatchConfigItem.nMatchUserCount;
 			stMatchNotification.nMatchScore = sMatchConfigItem.nApplyCost;
-			char szPrize[128];
-			sprintf(szPrize,"冠军即可获得%d元话费",sMatchConfigItem.nMatchType);
-			lstrcpyn(stMatchNotification.szMatchPrise,szPrize,sizeof(stMatchNotification.szMatchPrise));
-			printf("比赛时间检测\n");
-			if (nDiffTime==m_nMessageRemindTime1&&m_IsRemind[0]==0)
+			stMatchNotification.nMatchType = sMatchConfigItem.nMatchType;
+			/*printf("差距时间=%d，RemindTime1=%d，RemindTime2=%d，RemindTime3=%d，是否提醒过1=%d,2=%d,3=%d\n",nDiffTime,m_nMessageRemindTime1*60,m_nMessageRemindTime2*60,m_nMessageRemindTime3*60,m_IsRemind[0],m_IsRemind[1],m_IsRemind[2]);*/
+			if (nDiffTime>0&&nDiffTime<=(m_nMessageRemindTime1*60)&&m_IsRemind[0]==0)
 			{
 				m_nCurrentMatchID = sMatchConfigItem.nMatchNum;
 				printf("当前游戏场次=%d\n",m_nCurrentMatchID);
 				//发送提示信息
 				printf("5分钟检测\n");
 				m_IsRemind[0]=1;
-				_sntprintf(stMatchNotification.szNotification,CountArray(stMatchNotification.szNotification),TEXT("%s比赛还有%d分钟开始"),sMatchConfigItem.szMatchName,m_nMessageRemindTime1);
+				_sntprintf(stMatchNotification.szNotification,CountArray(stMatchNotification.szNotification),TEXT("%s还有%d分钟开始"),sMatchConfigItem.szMatchName,m_nMessageRemindTime1);
 				m_pITCPNetworkEngine->SendDataBatch(MDM_CS_MANAGER_SERVICE,SUB_CS_S_MATCH_NOTIFICATION,&stMatchNotification,sizeof(stMatchNotification),0L);
 			}
-			else if (nDiffTime==m_nMessageRemindTime2&&m_IsRemind[1]==0)
+			else if (nDiffTime>0&&nDiffTime<=(m_nMessageRemindTime2*60)&&m_IsRemind[1]==0)
 			{
 				m_nCurrentMatchID = sMatchConfigItem.nMatchNum;
 				printf("当前游戏场次=%d\n",m_nCurrentMatchID);
 				//发送提示信息
 				printf("3分钟检测\n");
 				m_IsRemind[1]=1;
-				_sntprintf(stMatchNotification.szNotification,CountArray(stMatchNotification.szNotification),TEXT("%s比赛还有%d分钟开始"),sMatchConfigItem.szMatchName,m_nMessageRemindTime2);
+				_sntprintf(stMatchNotification.szNotification,CountArray(stMatchNotification.szNotification),TEXT("%s还有%d分钟开始"),sMatchConfigItem.szMatchName,m_nMessageRemindTime2);
 				m_pITCPNetworkEngine->SendDataBatch(MDM_CS_MANAGER_SERVICE,SUB_CS_S_MATCH_NOTIFICATION,&stMatchNotification,sizeof(stMatchNotification),0L);
 			}
-			if (nDiffTime==m_nMessageRemindTime3&&m_IsRemind[2]==0)
+			else if (nDiffTime>0&&nDiffTime<=(m_nMessageRemindTime3*60)&&m_IsRemind[2]==0)
 			{
 				m_nCurrentMatchID = sMatchConfigItem.nMatchNum;
 				printf("当前游戏场次=%d\n",m_nCurrentMatchID);
 				//发送提示信息
 				printf("1分钟检测\n");
 				memset(m_IsRemind,0,sizeof(m_IsRemind));
-				_sntprintf(stMatchNotification.szNotification,CountArray(stMatchNotification.szNotification),TEXT("%s比赛还有%d分钟开始"),sMatchConfigItem.szMatchName,m_nMessageRemindTime3);
+				_sntprintf(stMatchNotification.szNotification,CountArray(stMatchNotification.szNotification),TEXT("%s还有%d分钟开始"),sMatchConfigItem.szMatchName,m_nMessageRemindTime3);
 				m_pITCPNetworkEngine->SendDataBatch(MDM_CS_MANAGER_SERVICE,SUB_CS_S_MATCH_NOTIFICATION,&stMatchNotification,sizeof(stMatchNotification),0L);
 
-				m_pITimerEngine->SetTimer(IDI_MATCH_BEGIN_REMINDER,1000,(DWORD)(-1),NULL);
+				m_pITimerEngine->SetTimer(IDI_MATCH_BEGIN_REMINDER,55000,1,NULL);
 				m_pITimerEngine->KillTimer(IDI_TIMER_CHECK_INTERVAL);
 			}
 
@@ -619,12 +641,6 @@ bool CAttemperEngineSink::OnEventTimer(DWORD dwTimerID, WPARAM wBindParam)
 		break;
 	case IDI_MATCH_BEGIN_REMINDER:
 		{
-			//发送提示信息
-			SYSTEMTIME st;
-			GetLocalTime(&st);
-			printf("当前秒数=%d\n",st.wSecond);
-			if (st.wSecond == 55)
-			{
 				//发送提示信息
 				CMD_GPO_MatchTimeNotify stMatchNotification={0};
 				stMatchNotification.cbMatchStatus = 0;
@@ -641,12 +657,16 @@ bool CAttemperEngineSink::OnEventTimer(DWORD dwTimerID, WPARAM wBindParam)
 					printf("游戏房间id=%d\n",m_vMatchGameServerID[m_nCurrentMatchID-1][i]);
 					SendDataToGame(m_vMatchGameServerID[m_nCurrentMatchID-1][i],MDM_CS_MANAGER_SERVICE,SUB_CS_S_MATCH_NOTIFICATION_COUNTDOWN,&stMatchNotification, sizeof(CMD_GPO_MatchTimeNotify));
 				}
-			}
-
-			if (st.wSecond == 59)
+			m_pITimerEngine->SetTimer(IDI_MATCH_BEGIN,5100,1,NULL);
+		}
+		break;
+	case IDI_MATCH_BEGIN:
 			{
 				//发送提示信息
 				CMD_CS_S_MatchBegin stMatchBegin = {0};
+
+				// Game begin
+				m_bIsGameBegin = true;
 
 				//Set Current Group Count
 				for (int i = 0; i < m_vMatchData[m_nCurrentMatchID - 1].size(); i++)
@@ -667,7 +687,7 @@ bool CAttemperEngineSink::OnEventTimer(DWORD dwTimerID, WPARAM wBindParam)
 
 				// fill the match info structure
 				tagMatchConfigItem stMatchConfigItem={0};
-				GetNextMatchInfo(stMatchConfigItem);
+				GetCurrentMatchInfo(m_nCurrentMatchID,stMatchConfigItem);
 
 				// init the UserCnt in Group
 				m_wUserNumPerGroup = stMatchConfigItem.nMatchUserCount;
@@ -677,12 +697,13 @@ bool CAttemperEngineSink::OnEventTimer(DWORD dwTimerID, WPARAM wBindParam)
 				stMatchBegin.nMatchID = stMatchConfigItem.nMatchNum;
 				lstrcpyn(stMatchBegin.szMatchName,stMatchConfigItem.szMatchName,CountArray(stMatchBegin.szMatchName));
 				strftime(stMatchBegin.szMatchDate,80,"%Y-%m-%d",timeinfo);
+				printf("比赛房间数目=%d\n",m_vMatchGameServerID[m_nCurrentMatchID - 1].size());
 				for (int i = 0; i < m_vMatchGameServerID[m_nCurrentMatchID - 1].size(); i++)
 				{
+					printf("房间id=%d\n",m_vMatchGameServerID[m_nCurrentMatchID-1][i]);
 					SendDataToGame(m_vMatchGameServerID[m_nCurrentMatchID-1][i],MDM_CS_MANAGER_SERVICE,SUB_CS_S_MATCH_BEGIN,&stMatchBegin, sizeof(CMD_CS_S_MatchBegin));
 				}
 				int nMatchTime = ((stMatchConfigItem.nEndTime/100)*60+stMatchConfigItem.nEndTime%100)-((stMatchConfigItem.nStartTime/100)*60+stMatchConfigItem.nStartTime%100);
-				m_pITimerEngine->KillTimer(IDI_MATCH_BEGIN_REMINDER);
 				m_pITimerEngine->SetTimer(IDI_MATCH_END_REMINDER,nMatchTime*60000-5000,1,NULL);
 				time_t now = time(NULL);
 				strftime(m_szMatchBeginTime, 20, "%Y-%m-%d %H:%M:%S", localtime(&now));
@@ -695,10 +716,11 @@ bool CAttemperEngineSink::OnEventTimer(DWORD dwTimerID, WPARAM wBindParam)
 					tagMatchItem stMatchItem = {0};
 					if (nNotEnoughNum > 0)
 					{
+						m_CurrentFakeNameNum = rand()%m_wAndroidFakeNameCnt;
 						for (int i = m_vMatchData[m_nCurrentMatchID-1][nEndIdx-1].size(); i < stMatchConfigItem.nMatchUserCount; ++i)
 						{
 							stMatchItem.dwUserID = 0;
-							stMatchItem.wServerID = 0;
+							stMatchItem.wServerID = m_vMatchData[m_nCurrentMatchID-1][nEndIdx-1][0].wServerID;
 							stMatchItem.bIsRobot = true;
 							m_CurrentFakeNameNum %= m_wAndroidFakeNameCnt;
 							lstrcpyn(stMatchItem.szNickName,g_pszFakeName[m_CurrentFakeNameNum],CountArray(stMatchItem.szNickName));
@@ -708,7 +730,6 @@ bool CAttemperEngineSink::OnEventTimer(DWORD dwTimerID, WPARAM wBindParam)
 							printf ("fake nickname %s inserted in \n", m_vMatchData[m_nCurrentMatchID-1][nEndIdx-1][i].szNickName);
 						}
 					}
-				}
 			
 			}
 		}
@@ -746,6 +767,9 @@ bool CAttemperEngineSink::OnEventTimer(DWORD dwTimerID, WPARAM wBindParam)
 				return false;
 			}
 
+			// Game End
+			m_bIsGameBegin = false;
+
 			// assume use the same info here	
 			CMD_CS_S_MatchEnd stMatchEnd = {0};
 			WORD wPacketSize=0;
@@ -758,17 +782,29 @@ bool CAttemperEngineSink::OnEventTimer(DWORD dwTimerID, WPARAM wBindParam)
 				for(int j = 0; j < m_vMatchData[m_nCurrentMatchID - 1][i].size(); ++j)
 				{
 					m_vMatchData[m_nCurrentMatchID - 1][i][j].cbRank = j + 1;
+					printf("%d排名=%d\n",j,m_vMatchData[m_nCurrentMatchID - 1][i][j].cbRank);
+					if (m_vMatchData[m_nCurrentMatchID - 1][i][j].bIsRobot)
+					{
+						continue;
+					}
 					pMatchResultItem=(stMatchResult *)(cbBuffer+wPacketSize);
 					pMatchResultItem->dwUserID = m_vMatchData[m_nCurrentMatchID - 1][i][j].dwUserID;
 					pMatchResultItem->lUserScore = m_vMatchData[m_nCurrentMatchID - 1][i][j].lMatchScore;
 					pMatchResultItem->nMatchRank = m_vMatchData[m_nCurrentMatchID - 1][i][j].cbRank;
 					pMatchResultItem->nServerId = m_vMatchData[m_nCurrentMatchID - 1][i][j].wServerID;
 					pMatchResultItem->nIsComplete = 1;
-					pMatchResultItem->nIsShare = 0;
 					pMatchResultItem->nGroupId = m_vMatchData[m_nCurrentMatchID - 1][i][j].wGroupID;
 					pMatchResultItem->nIsRobot = m_vMatchData[m_nCurrentMatchID - 1][i][j].bIsRobot;
 					pMatchResultItem->nMatchNum = m_vMatchData[m_nCurrentMatchID - 1][i][j].cbMatchNum;
 					pMatchResultItem->nMatchType = m_vMatchData[m_nCurrentMatchID - 1][i][j].cbMatchType;
+					if (m_vMatchData[m_nCurrentMatchID - 1][i][j].lMatchScore==0)
+					{
+						pMatchResultItem->nIsGet = 2;//2为无奖励
+					}
+					else
+					{
+						pMatchResultItem->nIsGet = 0;
+					}
 
 					lstrcpyn(pMatchResultItem->szBeginTime,m_szMatchBeginTime,sizeof(pMatchResultItem->szBeginTime));
 					strftime(pMatchResultItem->szEndTime, 20, "%Y-%m-%d %H:%M:%S", localtime(&now));
@@ -776,23 +812,27 @@ bool CAttemperEngineSink::OnEventTimer(DWORD dwTimerID, WPARAM wBindParam)
 					wPacketSize+=sizeof(stMatchResult);
 				}
 			}
-			m_pIDataBaseEngine->PostDataBaseRequest(0L,DBR_GR_SAVE_MATCH_RESULT,cbBuffer,wPacketSize);
+			m_pIDataBaseEngine->PostDataBaseRequest(DBR_GR_SAVE_MATCH_RESULT,0,cbBuffer,wPacketSize);
 			tagMatchConfigItem stMatchConfigItem={0};
 			GetCurrentMatchInfo(m_nCurrentMatchID,stMatchConfigItem);
 			printf("发送比赛结束消息，比赛类型=%d",stMatchConfigItem.nMatchType);
 			SendMatchEndInfoToServer(stMatchConfigItem.nMatchType);
-
+			for (int i = 0; i < m_vMatchData[m_nCurrentMatchID - 1].size(); ++i)
+			{
+				m_vMatchData[m_nCurrentMatchID - 1][i].clear();
+			}
 			// Send msg to GameServer
 			m_wGroupCnt = 0;
 			m_nCurrentMatchID = 0;
 			m_CurrentFakeNameNum = 0;
-			m_pITimerEngine->SetTimer(IDI_TIMER_CHECK_INTERVAL,20000,(DWORD)(-1),NULL);
+			m_pITimerEngine->SetTimer(IDI_TIMER_CHECK_INTERVAL,1000,(DWORD)(-1),NULL);
 		}
 		break;
 	case IDI_TIMER_LOAD_MATCH_CONFIG:
 		{
 			//加载比赛时间配置信息
 			m_pIDataBaseEngine->PostDataBaseRequest(DBR_GR_LOAD_MATCH_CONFIG,0,NULL,0);
+			m_pIDataBaseEngine->PostDataBaseRequest(DBR_GR_GET_SQL_TIME,0,NULL,0);
 		}
 		break;
 	//case IDI_PEARL:
@@ -854,6 +894,11 @@ bool CAttemperEngineSink::OnEventTimer(DWORD dwTimerID, WPARAM wBindParam)
 
 	//		return true;
 	//	}
+	case IDI_TIMER_SEND_FAKE_SERVERINFO:
+		{
+
+			return true;
+		}
 	}
 
 	return false;
@@ -999,34 +1044,40 @@ bool CAttemperEngineSink::OnEventDataBase(WORD wRequestID, DWORD dwContextID, VO
 			WORD wGroupID = 0;
 			DBO_GC_Insert_Match_SignUp_User * pInsertMatchSignUpUser = (DBO_GC_Insert_Match_SignUp_User *)pData;
 
-			printf("bIsSuccess = %d\n", pInsertMatchSignUpUser->bIsSignUpSuc);
 			if (pInsertMatchSignUpUser->bIsSignUpSuc == true)
 			{
-				printf("size of matchdata %d\n", m_vMatchData.size());
-				for (unsigned int i = 0; i < m_vMatchData.size(); i++)
+				printf("size of matchdata %d\n", m_vMatchData[pInsertMatchSignUpUser->nMatchID - 1].size());
+				char szMsg[100];
+				sprintf( szMsg, "用户id=%d，报名场次=%d,这场当前人数=%d,报名费=%d\n",pInsertMatchSignUpUser->dwUserID,pInsertMatchSignUpUser->nMatchID,m_vMatchData[pInsertMatchSignUpUser->nMatchID - 1].size(),pInsertMatchSignUpUser->wEnrollmentFee);
+				CString strTime(szMsg);
+				OnRecord(strTime);
+				for (unsigned int i = 0; i < m_vMatchData[pInsertMatchSignUpUser->nMatchID - 1].size(); i++)
 				{
 					printf("MatchID = %d, size of Current Id %d\n", pInsertMatchSignUpUser->nMatchID, m_vMatchData[pInsertMatchSignUpUser->nMatchID - 1][i].size());
-					if(pInsertMatchSignUpUser->nMatchID != 0 && (m_vMatchData[pInsertMatchSignUpUser->nMatchID - 1][i].size() < 8))
+					if(pInsertMatchSignUpUser->nMatchID != 0 && (m_vMatchData[pInsertMatchSignUpUser->nMatchID - 1][i].size() < m_wUserNumPerGroup))
 					{
+						wGroupID = i + 1;
+
 						tagMatchItem MatchSignUp = {0};
 						MatchSignUp.dwUserID = pInsertMatchSignUpUser->dwUserID;
 						MatchSignUp.wServerID = pInsertMatchSignUpUser->wServerID;
 						MatchSignUp.bIsRobot = false;
+						MatchSignUp.cbMatchNum = pInsertMatchSignUpUser->nMatchID;
+						MatchSignUp.cbMatchType = pInsertMatchSignUpUser->nMatchType;
+						MatchSignUp.wGroupID = wGroupID;
 						lstrcpyn(MatchSignUp.szNickName,pInsertMatchSignUpUser->szNickName,sizeof(MatchSignUp.szNickName));
 						m_vMatchData[pInsertMatchSignUpUser->nMatchID - 1][i].push_back(MatchSignUp);
 
 						// save the server id which has Match User
-						printf("the size of matchGameServerID %d\n", m_vMatchGameServerID[pInsertMatchSignUpUser->nMatchID - 1].size());
-						if(std::find(m_vMatchGameServerID[pInsertMatchSignUpUser->nMatchID - 1].begin(), 
-							m_vMatchGameServerID[pInsertMatchSignUpUser->nMatchID - 1].end(), 
-							MatchSignUp.wServerID) == m_vMatchGameServerID[pInsertMatchSignUpUser->nMatchID - 1].end()) 
+						if(std::find(m_vMatchGameServerID[pInsertMatchSignUpUser->nMatchID - 1].begin(), m_vMatchGameServerID[pInsertMatchSignUpUser->nMatchID - 1].end(), MatchSignUp.wServerID) == m_vMatchGameServerID[pInsertMatchSignUpUser->nMatchID - 1].end()) 
 						{
-							printf("find and push back serverid\n");
+							sprintf( szMsg, "insert Group ID is %d, the size of matchGameServerID %d\n",wGroupID, m_vMatchGameServerID[pInsertMatchSignUpUser->nMatchID - 1].size());
+							CString strTime2(szMsg);
+							OnRecord(strTime2);
 							m_vMatchGameServerID[pInsertMatchSignUpUser->nMatchID - 1].push_back(MatchSignUp.wServerID);
 						} 
 
 						bIsInsertSuc = true;
-						wGroupID = i + 1;
 
 						break;
 					}
@@ -1039,10 +1090,12 @@ bool CAttemperEngineSink::OnEventDataBase(WORD wRequestID, DWORD dwContextID, VO
 			stMatchSignUpRes.wGroupID = wGroupID;
 			stMatchSignUpRes.nMatchID = pInsertMatchSignUpUser->nMatchID;
 			stMatchSignUpRes.bMatchStatus = pInsertMatchSignUpUser->bMatchStatus;
+			stMatchSignUpRes.bIsInGame = pInsertMatchSignUpUser->bIsInGame;
+			stMatchSignUpRes.wEnrollmentFee = pInsertMatchSignUpUser->wEnrollmentFee;
 			lstrcpyn(stMatchSignUpRes.szDescription,pInsertMatchSignUpUser->szDescription,sizeof(stMatchSignUpRes.szDescription));
 
 			//printf("Match sign up res Userid = %lld, wGroup = %ld, MatchID = %d, MatchStatus = %d, NickName = %s\n", stMatchSignUpRes.dwUserID , stMatchSignUpRes.wGroupID, stMatchSignUpRes.nMatchID, stMatchSignUpRes.bMatchStatus, stMatchSignUpRes.szDescription);
-			printf("Match sign up res Userid = %ld\n", stMatchSignUpRes.dwUserID);
+			//printf("Match sign up res Userid = %ld, fee is %d\n", stMatchSignUpRes.dwUserID, pInsertMatchSignUpUser->wEnrollmentFee);
 
 			if (bIsInsertSuc == true && pInsertMatchSignUpUser->bIsSignUpSuc == true)
 			{
@@ -1086,7 +1139,19 @@ bool CAttemperEngineSink::OnEventDataBase(WORD wRequestID, DWORD dwContextID, VO
 				//插入列表
 				m_MatchConfigItemList.push_back(MatchConfigItem);
 				pGameItem++;
-	}
+			}
+			return true;
+		}
+	case DBO_GR_GET_SQL_TIME:
+		{
+			ASSERT(wDataSize==sizeof(DBO_Get_Sql_Time));
+			if (wDataSize!=sizeof(DBO_Get_Sql_Time)) return false;
+
+			//变量定义
+			DBO_Get_Sql_Time * pSqlTime=(DBO_Get_Sql_Time *)pData;
+			time_t SqlTime = StringToDatetime(pSqlTime->szTime);
+			time_t now = time(NULL);
+			m_nDifferentTime = now - SqlTime;
 			return true;
 		}
 	}
@@ -1706,22 +1771,29 @@ bool CAttemperEngineSink::OnTCPNetworkMainManagerService(WORD wSubCmdID, VOID * 
 			}
 
 			CMD_CS_C_MatchSignUp * pMatchSignUP = (CMD_CS_C_MatchSignUp *)pData;
+			if (m_bIsGameBegin&&m_nCurrentMatchID==pMatchSignUP->nMatchID)
+			{
+				return true;
+			}
 
 			DBR_GC_InsertMatchSignUpUser stMatchSignUP = {0};
 			stMatchSignUP.dwUserID = pMatchSignUP->dwUserID;
 			stMatchSignUP.wServerID = pMatchSignUP->wServerID;
 			stMatchSignUP.nMatchID = pMatchSignUP->nMatchID;
+			stMatchSignUP.llUserScore = pMatchSignUP->llUserScoreInGame;
+			// Game Begin deduct the score on user
+			stMatchSignUP.bIsInGame = true;
 
 			if (pMatchSignUP->nMatchID == 0)
 			{
 				printf("invalid MatchID\n");
-				return false;	
+				return true;	
 			}
 
 			WORD wGroupID = 0;
 			for (unsigned int i = 0; i < m_vMatchData[pMatchSignUP->nMatchID - 1].size(); i++)
 			{
-				if(m_vMatchData[pMatchSignUP->nMatchID - 1][i].size() < 8)
+				if(m_vMatchData[pMatchSignUP->nMatchID - 1][i].size() < m_wUserNumPerGroup)
 				{
 					wGroupID = i + 1;
 
@@ -1731,31 +1803,29 @@ bool CAttemperEngineSink::OnTCPNetworkMainManagerService(WORD wSubCmdID, VOID * 
 
 			stMatchSignUP.wGroupID = wGroupID;
 
+			printf("post match signup user\n");
 			m_pIDataBaseEngine->PostDataBaseRequest(DBR_GC_INSERT_MATCH_SIGNUP_USER,0,&stMatchSignUP,sizeof(DBR_GC_InsertMatchSignUpUser));
 
 			return true;
 		}
 	case SUB_CS_C_MATCH_USERSCORE_UPDATE:  // GameServer query the update score
 		{
-			if (m_nCurrentMatchID == 0)
+			if (m_nCurrentMatchID == 0||!m_bIsGameBegin)
 			{
-				printf ("Invalid Current Match ID\n");
-				return false;
+				return true;
 			}
-
-			printf("receive the update score from gameserver\n");
-			
+		
 			CMD_CS_C_MatchUserScore * pMatchUsersScoreForGameServer = (CMD_CS_C_MatchUserScore *) pData;
 			WORD wDataSize = 0;
 			wDataSize = sizeof(WORD) * 3 + sizeof(tagMatchUserInfo) * pMatchUsersScoreForGameServer->wUserCnt;
-			printf("wdatasize is %ld, MatchUsersScoreForGameServer->wDataSize = %ld\n", wDataSize, pMatchUsersScoreForGameServer->wDataSize);
 			if (wDataSize != pMatchUsersScoreForGameServer->wDataSize)
 			{
+				printf("wdatasize is %ld, MatchUsersScoreForGameServer->wDataSize = %ld\n", wDataSize, pMatchUsersScoreForGameServer->wDataSize);
 				printf("return false match score update\n");
-				return false;	
+				return true;	
 			}
 
-			printf("receive the update score from gameserver2\n");
+			printf("receive the update score from gameserver\n");
 			tagMatchUserInfo * ptmpMatchUserInfo = NULL;
 			WORD wTmpGroupID = 0;
 			for (int i = 0; i < pMatchUsersScoreForGameServer->wUserCnt; i ++)
@@ -1773,7 +1843,24 @@ bool CAttemperEngineSink::OnTCPNetworkMainManagerService(WORD wSubCmdID, VOID * 
 					}
 					else if (m_vMatchData[m_nCurrentMatchID - 1][wTmpGroupID-1][j].bIsRobot)
 					{
-						m_vMatchData[m_nCurrentMatchID - 1][wTmpGroupID-1][j].lMatchScore +=rand()%3*100;
+						int nTime= 10;
+						if (m_vMatchData[m_nCurrentMatchID - 1][wTmpGroupID-1][j].wServerID==m_nNewPlayerServerId)
+						{
+							nTime =10;
+						}
+						else if (m_vMatchData[m_nCurrentMatchID - 1][wTmpGroupID-1][j].wServerID==m_nHundredServerId)
+						{
+							nTime =100;
+						}
+						else if (m_vMatchData[m_nCurrentMatchID - 1][wTmpGroupID-1][j].wServerID==m_nThousandServerId)
+						{
+							nTime =1000;
+						}
+						else if (m_vMatchData[m_nCurrentMatchID - 1][wTmpGroupID-1][j].wServerID==m_nTenThousandServerId)
+						{
+							nTime =10000;
+						}
+						m_vMatchData[m_nCurrentMatchID - 1][wTmpGroupID-1][j].lMatchScore +=rand()%150*nTime;
 					}
 				}
 
@@ -1785,9 +1872,10 @@ bool CAttemperEngineSink::OnTCPNetworkMainManagerService(WORD wSubCmdID, VOID * 
 			for (int i = 0; i < m_wGroupCnt; i++)
 			{
 				std::sort (m_vMatchData[m_nCurrentMatchID - 1][i].begin(), m_vMatchData[m_nCurrentMatchID - 1][i].end(),Sort_Match_Score());
-				for(int j = 0; j < m_vMatchData[m_nCurrentMatchID - 1][i].size(); j ++)
+				for(int j = 0; j < m_vMatchData[m_nCurrentMatchID - 1][i].size(); j++)
 				{
 					m_vMatchData[m_nCurrentMatchID - 1][i][j].cbRank = j + 1;
+					//printf("%d排名=%d\n",j,m_vMatchData[m_nCurrentMatchID - 1][i][j].cbRank);
 				}
 			}
 
@@ -1804,14 +1892,14 @@ bool CAttemperEngineSink::OnTCPNetworkMainManagerService(WORD wSubCmdID, VOID * 
 			tagMatchConfigItem stMatchConfigItem = {0};
 			GetCurrentMatchInfo(m_nCurrentMatchID, stMatchConfigItem);
 
-			stMatchScoreUpdate.nSecond = ((stMatchConfigItem.nEndTime/100)*3600+stMatchConfigItem.nEndTime%100 * 60)- ((st.wHour)*3600+ st.wMinute * 60 + st.wSecond);
-
-			printf("Time remain is %d second\n", stMatchScoreUpdate.nSecond);
-
+			stMatchScoreUpdate.nSecond = ((stMatchConfigItem.nEndTime/100)*3600+stMatchConfigItem.nEndTime%100 * 60)- ((st.wHour)*3600+ st.wMinute * 60 + st.wSecond)+m_nDifferentTime;
+			printf("与数据库差异时间=%d,剩余时间=%d\n",m_nDifferentTime,stMatchScoreUpdate.nSecond);
 			WORD wMatchUserCnt = 0;
 			WORD wCurrentID = 0;
+			printf("**************************************\ngroup count is %hu\n", m_wGroupCnt);
 			for (int i = 0 ; i < m_wGroupCnt; i++)
 			{
+				printf("the size of the m_vMatchData[m_nCurrentMatchID - 1][i] is %d\n",  m_vMatchData[m_nCurrentMatchID - 1][i].size());
 				for(int j = 0; j < m_vMatchData[m_nCurrentMatchID - 1][i].size(); j++)
 				{
 					wCurrentID = i * m_wUserNumPerGroup + j;
@@ -1820,15 +1908,17 @@ bool CAttemperEngineSink::OnTCPNetworkMainManagerService(WORD wSubCmdID, VOID * 
 
 					stMatchScoreUpdate.aMatchUserUpdInfo[wCurrentID].lUserScore = m_vMatchData[m_nCurrentMatchID - 1][i][j].lMatchScore;
 					wMatchUserCnt++;
+
+					//printf("Update info send to GS: UserID is %u, lUserScore is %lld\n", stMatchScoreUpdate.aMatchUserUpdInfo[wCurrentID].dwUserID,stMatchScoreUpdate.aMatchUserUpdInfo[wCurrentID].lUserScore);
 				}
 			}
-
-			printf("wMatchUserCnt = %ld\n", wMatchUserCnt);
+			lstrcpyn(stMatchScoreUpdate.szMatchTitle,stMatchConfigItem.szMatchName,sizeof(stMatchScoreUpdate.szMatchTitle));
 
 			WORD wSendDataSize = 0;
-			wSendDataSize = wMatchUserCnt * sizeof(tagUpdateInfoItem) + sizeof(WORD) * 4 + sizeof(int);  //calc the size of the CMD_CS_S_MatchScoreUpdate 
+			wSendDataSize = wMatchUserCnt * sizeof(tagUpdateInfoItem) + sizeof(WORD) * 4 + sizeof(int) + sizeof(stMatchScoreUpdate.szMatchTitle);  //calc the size of the CMD_CS_S_MatchScoreUpdate 
 			stMatchScoreUpdate.wGroupCnt = m_wGroupCnt;
 			stMatchScoreUpdate.wUserCnt = wMatchUserCnt;
+			printf("UserCnt is %u\n", stMatchScoreUpdate.wUserCnt);
 			for (int i = 0; i < m_vMatchGameServerID[m_nCurrentMatchID - 1].size(); i++)
 			{
 				// test
@@ -1838,17 +1928,106 @@ bool CAttemperEngineSink::OnTCPNetworkMainManagerService(WORD wSubCmdID, VOID * 
 
 			return true;
 		}
-	//case SUB_CS_S_MATCH_SCORE_UPDATE:
-	//	{
-	//		if (wDataSize != sizeof(CMD_CS_C_MatchScoreUpdate))
-	//		{
-	//			return false;
-	//		}
+	case SUB_CS_C_MATCH_USERINFO_RELOAD:
+		{
+			if (wDataSize != sizeof(CMD_CS_C_MatchUserInfo_Reload))
+			{
+				printf("datasize wrong\n");
+				return true;
+			}
 
-	//		CMD_CS_C_MatchScoreUpdate * pMatchScoreUpdate = (CMD_CS_C_MatchScoreUpdate *)pData;
+			printf("receive reload request from GS\n");
 
-	//		return true;
-	//	}
+			CMD_CS_C_MatchUserInfo_Reload * pMatchUserInfoReload = (CMD_CS_C_MatchUserInfo_Reload *)pData;
+
+			if (pMatchUserInfoReload == NULL)
+			{
+				printf("In para pointer is null\n");	
+				return true;
+			}
+
+			CMD_CS_C_MatchUserInfo_Reload_Res stMatchUserIfoReload = {0};
+			stMatchUserIfoReload.dwUserID = pMatchUserInfoReload->dwUserID;
+			stMatchUserIfoReload.wCount = 0;
+			stMatchUserIfoReload.wDataSize = 0;
+
+			bool bIsReload = false;
+
+			WORD wInsertCount = 0;
+				
+			if (m_vMatchData.size() <= 0)
+			{
+				printf("the size of the match data is zero");
+				return true;		
+			}
+
+			// 遍历所有信息, 找出用户信息
+			for (int i = 0; i < m_vMatchData.size(); i ++)
+			{
+				if (m_vMatchData[i].size() <= 0)
+				{
+					continue;
+				}
+
+				for (int j = 0; j < m_vMatchData[i].size(); j++)
+				{
+					if (m_vMatchData[i][j].size() <= 0)
+					{
+						continue;
+					}
+
+					for (int k = 0; k < m_vMatchData[i][j].size(); k ++)
+					{
+						if (m_vMatchData[i][j][k].dwUserID == pMatchUserInfoReload->dwUserID)
+						{
+							stMatchUserIfoReload.aMatchUserInfoReload[wInsertCount].dwUserID = m_vMatchData[i][j][k].dwUserID;
+							stMatchUserIfoReload.aMatchUserInfoReload[wInsertCount].lUserScore = 0;
+							stMatchUserIfoReload.aMatchUserInfoReload[wInsertCount].wGroupID = m_vMatchData[i][j][k].wGroupID;
+							stMatchUserIfoReload.aMatchUserInfoReload[wInsertCount].wMatchID = m_vMatchData[i][j][k].cbMatchNum;
+
+							m_vMatchData[i][j][k].wServerID = pMatchUserInfoReload->wServerID;
+							wInsertCount ++;
+							bIsReload = true;
+
+							// Insert the ServerID with Match
+							if(std::find(m_vMatchGameServerID[i].begin(), 
+								m_vMatchGameServerID[i].end(), 
+								pMatchUserInfoReload->wServerID) == m_vMatchGameServerID[i].end()) 
+							{
+								printf("find and push back serverid\n");
+								m_vMatchGameServerID[i].push_back(pMatchUserInfoReload->wServerID);
+							}
+
+							printf("Reload info insert UserID is %u, MatchScore is %lld, GroupID is %hu\n", 
+								m_vMatchData[i][j][k].dwUserID,
+								m_vMatchData[i][j][k].lMatchScore,
+								m_vMatchData[i][j][k].wGroupID);
+						}
+					}
+				}
+			
+			}
+
+			stMatchUserIfoReload.wCount = wInsertCount;
+			stMatchUserIfoReload.bIsGameBegin = m_bIsGameBegin;
+			stMatchUserIfoReload.wDataSize = sizeof(CMD_CS_C_MatchUserInfo_Reload_Res)
+				- sizeof(tagMatchUserInfoReloadRes) * (100 - stMatchUserIfoReload.wCount);
+
+			printf("S send reload info to GS, ServerID is %u, datasize is %u, insert count is %u\n", 
+				pMatchUserInfoReload->wServerID,
+				stMatchUserIfoReload.wDataSize,
+				stMatchUserIfoReload.wCount);
+				
+
+			SendDataToGame(pMatchUserInfoReload->wServerID,MDM_CS_MANAGER_SERVICE,SUB_CS_S_MATCH_USERINFO_RELOAD_RES, &stMatchUserIfoReload, stMatchUserIfoReload.wDataSize);
+			return true;
+		}
+	case SUB_CS_C_QUERY_FAKE_SERVERINFO:
+		{
+			// global get server count ; package the info
+			// CMD_CS_S_FakeServerInfo tagFakeServerInfo
+			m_pITCPNetworkEngine->SendData(dwSocketID,MDM_CS_MANAGER_SERVICE,SUB_CS_S_QUERY_FAKE_SERVERINFO,&SearchCorrespond,wHeadSize+wItemSize);
+		}
 	}
 
 	return false;
@@ -1932,9 +2111,9 @@ void CAttemperEngineSink::GetNextMatchInfo(tagMatchConfigItem &MatchConfigItem)
 		int nMatchStartTime = (iter->nStartTime)/100 * 60 + (iter->nStartTime)%100;
 		int nCurrentTime = SystemTime.wHour * 60 + SystemTime.wMinute;
 		int nDiffTime = nMatchStartTime - nCurrentTime;
-		//printf("获得下一场比赛时间=%d,比赛类型=%d\n",iter->nStartTime,iter->nMatchType);
 		if (nDiffTime >=m_nMessageRemindTime3 && nDiffTime<=m_nMessageRemindTime1)
 		{
+			//printf("获得下一场比赛时间=%d,比赛类型=%d\n",iter->nStartTime,iter->nMatchType);
 			MatchConfigItem.nApplyCost = iter->nApplyCost;
 			MatchConfigItem.nEndTime = iter->nEndTime;
 			MatchConfigItem.nGameTime = iter->nGameTime;
@@ -2033,7 +2212,6 @@ void CAttemperEngineSink::GetCurrentMatchInfo(int nMatchNum, tagMatchConfigItem 
 {
 	for (std::list<tagMatchConfigItem>::iterator iter=m_MatchConfigItemList.begin(); iter!=m_MatchConfigItemList.end(); iter++)
 	{
-		printf("当前的比赛场次=%d,iternMatchNum=%d\n",nMatchNum,iter->nMatchNum);
 		if (nMatchNum==iter->nMatchNum)
 		{
 			MatchConfigItem.nApplyCost = iter->nApplyCost;
@@ -2079,7 +2257,7 @@ bool CAttemperEngineSink::SendMatchEndInfoToServer(int nMatchType)
 			}
 		}
 		wSendDataSize = sizeof(WORD)*2 + stUserInfo.wVectorSize * sizeof(tagMatchEndInfo);
-		printf("发送比赛结果数据wSendDataSize=%d\n",wSendDataSize);
+		printf("发送比赛结果数据wSendDataSize=%d, ServerID is %d\n",wSendDataSize, m_vMatchGameServerID[m_nCurrentMatchID - 1][i]);
 		SendDataToGame(m_vMatchGameServerID[m_nCurrentMatchID - 1][i], MDM_CS_MANAGER_SERVICE, SUB_CS_S_MATCH_END, &stUserInfo, wSendDataSize);
 
 		wSendDataSize = 0;
@@ -2087,5 +2265,61 @@ bool CAttemperEngineSink::SendMatchEndInfoToServer(int nMatchType)
 		memset(stUserInfo.vUserMatchEndInfo,0,sizeof(stUserInfo.vUserMatchEndInfo));
 	}
 	return true;
+}
+
+time_t CAttemperEngineSink::StringToDatetime(const char *strTime)  
+{  
+	if (NULL == strTime)  
+	{  
+		return 0;  
+	}  
+	tm tm_;  
+	int year, month, day, hour, minute,second;  
+	sscanf(strTime,"%d-%d-%dT%d:%d:%d", &year, &month, &day, &hour, &minute, &second);  
+	tm_.tm_year  = year-1900;  
+	tm_.tm_mon   = month-1;  
+	tm_.tm_mday  = day;  
+	tm_.tm_hour  = hour;  
+	tm_.tm_min   = minute;  
+	tm_.tm_sec   = second;  
+	tm_.tm_isdst = 0;  
+
+	time_t t_ = mktime(&tm_); //已经减了8个时区  
+	
+	return t_; //秒时间  
+}
+
+void CAttemperEngineSink::OnRecord(CString strMsg)
+{
+	CString strFileDlgPath;
+	TCHAR szModuleDirectory[MAX_PATH];	//模块目录
+	GetModuleFileName(AfxGetInstanceHandle(),szModuleDirectory,sizeof(szModuleDirectory));
+	int nModuleLen=lstrlen(szModuleDirectory);
+	int nProcessLen=lstrlen(AfxGetApp()->m_pszExeName)+lstrlen(TEXT(".EXE")) + 1;
+	if (nModuleLen<=nProcessLen) 
+		return ;
+	szModuleDirectory[nModuleLen-nProcessLen]=0;
+	strFileDlgPath = szModuleDirectory;
+	CString strThreadLogDir  = strFileDlgPath+"\\Record.log";
+	SYSTEMTIME sys; 
+	GetLocalTime(&sys);
+	char szTime[100];
+	sprintf( szTime, "日期::%d:%d:%d:%d\r\n",sys.wDay,sys.wHour,sys.wMinute,sys.wSecond);
+	CString strTime(szTime);
+	strMsg = strMsg + strTime;
+	CFile fLog;
+	if(fLog.Open( strThreadLogDir, CFile::modeCreate|CFile::modeNoTruncate|CFile::modeReadWrite ))
+	{
+
+		fLog.SeekToEnd(); 	
+		int strLength=strMsg.GetLength();
+#ifdef _UNICODE
+		BYTE bom[2] = {0xff, 0xfe};
+		fLog.Write(bom,sizeof(BYTE)*2);
+		strLength*=2;
+#endif
+		fLog.Write((LPCTSTR)strMsg,strLength);
+		fLog.Close();
+	}
 }
 //////////////////////////////////////////////////////////////////////////////////

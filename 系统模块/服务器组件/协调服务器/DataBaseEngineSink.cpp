@@ -229,6 +229,10 @@ bool CDataBaseEngineSink::OnDataBaseEngineRequest(WORD wRequestID, DWORD dwConte
 		{
 			return OnRequestSaveMatchResult(dwContextID,pData,wDataSize);
 		}
+	case DBR_GR_GET_SQL_TIME:
+		{
+			return OnRequestGetSqlTime(dwContextID,pData,wDataSize);
+		}
 	}
 
 	return false;
@@ -250,6 +254,8 @@ bool CDataBaseEngineSink::OnRequestInsertMatchSignUpUser(DWORD dwContextID, VOID
 		m_TreasureDBAide.ResetParameter();
 		m_TreasureDBAide.AddParameter(TEXT("@dwUserID"),pInsertMatchSignUpUser->dwUserID);
 		m_TreasureDBAide.AddParameter(TEXT("@MatchNum"),pInsertMatchSignUpUser->nMatchID);
+		m_TreasureDBAide.AddParameter(TEXT("@bIsInGame"),pInsertMatchSignUpUser->bIsInGame);
+		m_TreasureDBAide.AddParameter(TEXT("@llUserScoreInGame"),pInsertMatchSignUpUser->llUserScore);
 		time_t rawtime;
 		struct tm * timeinfo;
 		TCHAR buffer[80];
@@ -273,24 +279,40 @@ bool CDataBaseEngineSink::OnRequestInsertMatchSignUpUser(DWORD dwContextID, VOID
 		stDBOInsertMatchSignUPUser.wServerID = pInsertMatchSignUpUser->wServerID;
 		stDBOInsertMatchSignUPUser.nMatchID = m_TreasureDBAide.GetValue_LONG(TEXT("MatchID"));
 		stDBOInsertMatchSignUPUser.bMatchStatus = m_TreasureDBAide.GetValue_LONG(TEXT("MatchStatus"));
+		stDBOInsertMatchSignUPUser.bIsInGame = pInsertMatchSignUpUser->bIsInGame;
+		stDBOInsertMatchSignUPUser.wGroupID = pInsertMatchSignUpUser->wGroupID;
 		m_TreasureDBAide.GetValue_String(TEXT("NickName"),stDBOInsertMatchSignUPUser.szNickName,CountArray(stDBOInsertMatchSignUPUser.szNickName));
-
+		stDBOInsertMatchSignUPUser.nMatchType = m_TreasureDBAide.GetValue_LONG(TEXT("MatchType"));
+		stDBOInsertMatchSignUPUser.wEnrollmentFee = m_TreasureDBAide.GetValue_LONG(TEXT("EnrollmentFee"));
 		//结果处理
 		CDBVarValue DBVarValue;
 		m_TreasureDBModule->GetParameter(TEXT("@strErrorDescribe"),DBVarValue);
 		lstrcpyn(stDBOInsertMatchSignUPUser.szDescription,CW2CT(DBVarValue.bstrVal),CountArray(stDBOInsertMatchSignUPUser.szDescription));
 
+		//检测用户身上的分数是否够报名费, 并且没有报名
+		//if (stDBOInsertMatchSignUPUser.wEnrollmentFee > pInsertMatchSignUpUser->llUserScore && !stDBOInsertMatchSignUPUser.bMatchStatus)
+		//{
+		//	lResultCode = DB_ERROR;	
+		//	lstrcpyn(stDBOInsertMatchSignUPUser.szDescription,TEXT("报名费不足, 请充值"),CountArray(stDBOInsertMatchSignUPUser.szDescription));
+		//}
+
 		if (lResultCode == DB_SUCCESS)
 		{
 			stDBOInsertMatchSignUPUser.bIsSignUpSuc = true;
-			printf("SignUp Success\n");
+			char szMsg[100];
+			sprintf( szMsg, "用户Id=%ld报名成功",pInsertMatchSignUpUser->dwUserID);
+			CString strTime(szMsg);
+			OnRecord(strTime);
 			m_pIDataBaseEngineEvent->OnEventDataBaseResult(DBO_GC_INSERT_MATCH_SIGNUP_USER,dwContextID,
 				&stDBOInsertMatchSignUPUser,sizeof(DBO_GC_Insert_Match_SignUp_User));
 		}
 		else
 		{
 			stDBOInsertMatchSignUPUser.bIsSignUpSuc = false;
-			printf("SignUP failed\n");
+			char szMsg[100];
+			sprintf( szMsg, "用户Id=%ld报名失败",pInsertMatchSignUpUser->dwUserID);
+			CString strTime(szMsg);
+			OnRecord(strTime);
 			m_pIDataBaseEngineEvent->OnEventDataBaseResult(DBO_GC_INSERT_MATCH_SIGNUP_USER,dwContextID,
 				&stDBOInsertMatchSignUPUser,sizeof(DBO_GC_Insert_Match_SignUp_User));
 		}
@@ -325,9 +347,14 @@ bool CDataBaseEngineSink::OnRequestLoadMatchConfig(DWORD dwContextID, VOID * pDa
 	try
 	{
 		WORD wPacketSize=0;
-		BYTE cbBuffer[MAX_ASYNCHRONISM_DATA];
+		BYTE cbBuffer[MAX_ASYNCHRONISM_DATA*10];
 		//构造参数
 		m_TreasureDBAide.ResetParameter();
+		SYSTEMTIME st;
+		GetLocalTime(&st);
+		char szTime[20];
+		sprintf(szTime,"%d-%d-%d",st.wYear,st.wMonth,st.wDay);
+		m_TreasureDBAide.AddParameter(TEXT("@MachDay"),szTime);
 		//执行查询
 		LONG lReturnValue=m_TreasureDBAide.ExecuteProcess(TEXT("GSP_GR_LoadMatchConfig"),true);
 		DBO_Load_Match_Config_Item * pMatchConfigItem=NULL;
@@ -382,19 +409,19 @@ bool CDataBaseEngineSink::OnRequestSaveMatchResult(DWORD dwContextID, VOID * pDa
 	{
 		CString strSQLTmp;
 		stMatchResult *stTmp = (stMatchResult*)pData+i;
-		strSQLTmp.Format(TEXT("exec GSP_GP_INSERT_MATCH_RESULT %ld,%lld,%d,\"%s\",\"%s\",%d,%d,%d,%d,%d,%d,%d ;"),
+		strSQLTmp.Format(TEXT("exec GSP_GP_INSERT_MATCH_RESULT %ld,%lld,%d,\"%s\",\"%s\",%d,%d,%d,%d,%d,%d,%d;"),
 			stTmp->dwUserID,
 			stTmp->lUserScore,
 			stTmp->nMatchRank,
 			stTmp->szBeginTime,
 			stTmp->szEndTime,
 			stTmp->nMatchNum,
-			stTmp->nIsShare,
 			stTmp->nServerId,
 			stTmp->nIsComplete,
 			stTmp->nIsRobot,
 			stTmp->nMatchType,
-			stTmp->nGroupId
+			stTmp->nGroupId,
+			stTmp->nIsGet
 			);
 
 		if (cstrSQL.GetLength()>=1023 - 180)
@@ -441,5 +468,75 @@ bool CDataBaseEngineSink::OnRequestSaveMatchResult(DWORD dwContextID, VOID * pDa
 
 
 	return true;
+}
+
+
+bool CDataBaseEngineSink::OnRequestGetSqlTime(DWORD dwContextID, VOID * pData, WORD wDataSize)
+{
+	try
+	{
+		WORD wPacketSize=0;
+		BYTE cbBuffer[MAX_ASYNCHRONISM_DATA];
+		//构造参数
+		m_TreasureDBAide.ResetParameter();
+		//执行查询
+		LONG lReturnValue=m_TreasureDBAide.ExecuteProcess(TEXT("GSP_GP_Get_Sql_Time"),true);
+		DBO_Get_Sql_Time pSqlTime={0};
+		//结果处理
+		if(lReturnValue==0)
+		{
+
+			m_TreasureDBAide.GetValue_String(TEXT("SqlTime"),pSqlTime.szTime,CountArray(pSqlTime.szTime));
+			m_pIDataBaseEngineEvent->OnEventDataBaseResult(DBO_GR_GET_SQL_TIME,dwContextID,&pSqlTime,sizeof(DBO_Get_Sql_Time));
+
+		}
+		
+
+		return true;
+	}
+	catch (IDataBaseException * pIException)
+	{
+		//错误信息
+		CTraceService::TraceString(TEXT("GSP_GP_Get_Sql_Time"),TraceLevel_Exception);
+		CTraceService::TraceString(pIException->GetExceptionDescribe(),TraceLevel_Exception);
+
+		return false;
+	}
+
+	return true;
+}
+
+void CDataBaseEngineSink::OnRecord(CString strMsg)
+{
+	CString strFileDlgPath;
+	TCHAR szModuleDirectory[MAX_PATH];	//模块目录
+	GetModuleFileName(AfxGetInstanceHandle(),szModuleDirectory,sizeof(szModuleDirectory));
+	int nModuleLen=lstrlen(szModuleDirectory);
+	int nProcessLen=lstrlen(AfxGetApp()->m_pszExeName)+lstrlen(TEXT(".EXE")) + 1;
+	if (nModuleLen<=nProcessLen) 
+		return ;
+	szModuleDirectory[nModuleLen-nProcessLen]=0;
+	strFileDlgPath = szModuleDirectory;
+	CString strThreadLogDir  = strFileDlgPath+"\\Record.log";
+	SYSTEMTIME sys; 
+	GetLocalTime(&sys);
+	char szTime[100];
+	sprintf( szTime, "日期::%d:%d:%d:%d\r\n",sys.wDay,sys.wHour,sys.wMinute,sys.wSecond);
+	CString strTime(szTime);
+	strMsg = strMsg + strTime;
+	CFile fLog;
+	if(fLog.Open( strThreadLogDir, CFile::modeCreate|CFile::modeNoTruncate|CFile::modeReadWrite ))
+	{
+
+		fLog.SeekToEnd(); 	
+		int strLength=strMsg.GetLength();
+#ifdef _UNICODE
+		BYTE bom[2] = {0xff, 0xfe};
+		fLog.Write(bom,sizeof(BYTE)*2);
+		strLength*=2;
+#endif
+		fLog.Write((LPCTSTR)strMsg,strLength);
+		fLog.Close();
+	}
 }
 //////////////////////////////////////////////////////////////////////////////////

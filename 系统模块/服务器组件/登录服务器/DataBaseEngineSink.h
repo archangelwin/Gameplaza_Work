@@ -288,6 +288,8 @@ protected:
 	bool OnRequestQueryFreeLabaCount(DWORD dwContextID, VOID * pData, WORD wDataSize);
 	//获得比赛奖励
 	bool OnRequestGetMatchPirze(DWORD dwContextID, VOID * pData, WORD wDataSize);
+	//购买技能
+	bool OnRequestBuySkill(DWORD dwContextID, VOID * pData, WORD wDataSize);
 };
 
 //////////////////////////////////////////////////////////////////////////////////

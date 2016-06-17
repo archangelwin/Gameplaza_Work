@@ -1050,11 +1050,14 @@ public:
 	virtual void SaveUserItemCount(IServerUserItem * pIServerUserItem, int nType, SCORE lCount)=NULL;
 	//发送获得巨奖公告
 	virtual bool OnWinBigReward(IServerUserItem * pIServerUserItem,int nScore)=NULL;
+	//修改背包
+	virtual bool ModifyBackpack(IServerUserItem * pIServerUserItem, BYTE cbType, int nChange)=NULL;
 	//设置藏宝图数量
 	virtual void SetTreasureMapCount(IServerUserItem * pIServerUserItem,int nCount)=NULL;
 	virtual void UpdateUserKValueAndIntegration(IServerUserItem * pIServerUserItem,int nKvalue,int nIntegration)=NULL;
 	virtual void UpdateUserMaxKValue(IServerUserItem * pIServerUserItem,int nCount)=NULL;
 	virtual void UpdateUserIntegrate(IServerUserItem * pIServerUserItem,int nAddScore)=NULL;
+	//在比赛中扣除玩家分数
 };
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -1111,7 +1114,6 @@ public:
 	virtual bool OnGetUserItemCount(IServerUserItem * pIServerUserItem, int nType, SCORE lCount)=NULL;
 	//处理比赛排名
 	virtual void OnMatchRank(IServerUserItem * pIServerUserItem, SCORE lMatchScore, int nCurrentRank, int nChangeRank)=NULL;
-
 	//网络接口
 public:
 	//游戏消息
@@ -1125,6 +1127,10 @@ public:
 	virtual void SetGameBaseScore(LONG lBaseScore)=NULL;
 	//获取游戏内部分数
 	virtual	LONG GetInsideScore(WORD wChairID)=NULL;
+	//
+	virtual bool OnChangeMatchPlayerScore(IServerUserItem * pIServerUserItem, int wSignUpFee, WORD wChairID, SCORE &llUserScore)=NULL;
+
+	virtual void SetMatchStatus(bool bPlaying)=NULL;
 };
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -1239,6 +1245,8 @@ public:
 	virtual void SaveUserItemCount(IServerUserItem * pIServerUserItem, int nType, SCORE lCount)=NULL;
 	//发送获得巨奖公告
 	virtual bool OnWinBigReward(IServerUserItem * pIServerUserItem,int nScore)=NULL;
+	//修改背包
+	virtual bool ModifyBackpack(IServerUserItem * pIServerUserItem, BYTE cbType, int nChange)=NULL;
 	//设置藏宝图数量
 	virtual void SetTreasureMapCount(IServerUserItem * pIServerUserItem,int nCount)=NULL;
 	virtual void UpdateUserKValueAndIntegration(IServerUserItem * pIServerUserItem,int nKvalue,int nIntegration)=NULL;

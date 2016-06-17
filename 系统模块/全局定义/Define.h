@@ -290,7 +290,10 @@
 #define LOGON_FAIL_SERVER_INVALIDATION  200                                 //房间失效
 
 //登录队列最大发送给数据库的数量
-#define LOGIN_MAX_SEND_TO_DATABASE_NUM  20                                 
+#define LOGIN_MAX_SEND_TO_DATABASE_NUM  20        
+
+#define MATCH_TYPE_COST  1 
+#define MATCH_TYPE_FREE  2     
 
 ////////////////////////////////////////////////////////////////////////////////
 #endif

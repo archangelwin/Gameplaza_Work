@@ -219,6 +219,8 @@ struct CMD_CS_S_SearchCorrespond
 #define SUB_CS_C_MatchScoreFinish	11
 #define SUB_CS_C_MATCH_SIGNUP		12
 #define SUB_CS_C_MATCH_USERSCORE_UPDATE		13
+#define SUB_CS_C_MATCH_USERINFO_RELOAD		14
+#define SUB_CS_C_QUERY_FAKE_SERVERINFO		15
 
 #define SUB_CS_S_SYSTEM_MESSAGE 	100									//系统消息
 #define SUB_CS_S_PROPERTY_TRUMPET  	200									//喇叭消息
@@ -238,6 +240,8 @@ struct CMD_CS_S_SearchCorrespond
 #define SUB_CS_S_MATCH_BEGIN		1300						//比赛开始
 #define SUB_CS_S_MATCH_END			1400						//比赛结束
 #define SUB_CS_S_MATCH_SCORE_UPDATE	1500						//比赛分数刷新
+#define SUB_CS_S_MATCH_USERINFO_RELOAD_RES	1600				//参赛玩家分数重拉结果
+#define SUB_CS_S_QUERY_FAKE_SERVERINFO		1700				// send fake server res to logon server
 
 
 //发送喇叭
@@ -316,6 +320,8 @@ struct CMD_CS_C_MatchSignUp
 	DWORD dwUserID;
 	WORD wServerID;
 	int nMatchID;
+	SCORE llUserScoreInGame;
+	bool bIsInGame;
 };
 
 // 比赛报名结果
@@ -325,7 +331,9 @@ struct CMD_CS_S_MatchSignUpRes
 	WORD  wGroupID;
 	int   nMatchID;
 	bool  bIsSignUpSuc;
+	bool  bIsInGame;
 	bool  bMatchStatus;//报名状态，0为未报名，1为已经报名
+	WORD  wEnrollmentFee;
 	SCORE llUserScore;//玩家当前金币
 	char szDescription[128];//描述信息
 };
@@ -422,6 +430,7 @@ struct CMD_CS_S_MatchScoreUpdate
 	WORD wUserNumPerGroup;					// equals 8 tmp
 	WORD wDataSize;
 	WORD wUserCnt;
+	TCHAR szMatchTitle[128];
 	tagUpdateInfoItem aMatchUserUpdInfo[200];		//协调服务器用户信息汇总
 };
 
@@ -446,6 +455,7 @@ struct MatchNotification
 	int nMatchPeopleNum;//参赛人数
 	int nMatchScore;//报名费
 	int nMatchID;//比赛场次
+	int nMatchType;
 	TCHAR szNotification[128];
 	char szMatchPrise[128];//比赛奖励说明
 };
@@ -455,6 +465,43 @@ struct CMD_GPO_MatchTimeNotify                          //比赛倒计时倒计时
 	BYTE cbMatchStatus;//0代表比赛之前倒计时，1代表比赛结束倒计时
 	int nSecond;//倒计时提示时间
 	TCHAR szTitle[128];
+};
+
+
+struct CMD_CS_C_MatchUserInfo_Reload
+{
+	DWORD dwUserID;
+	WORD  wServerID;
+};
+
+struct tagMatchUserInfoReloadRes
+{
+	DWORD dwUserID;
+	WORD  wGroupID;
+	WORD  wMatchID;
+	SCORE lUserScore;
+};
+
+struct CMD_CS_C_MatchUserInfo_Reload_Res
+{
+	bool bIsGameBegin;
+	DWORD dwUserID;
+	WORD  wCount;
+	WORD  wDataSize;
+	tagMatchUserInfoReloadRes aMatchUserInfoReload[100];
+};
+
+struct tagFakeServerInfo
+{
+	WORD wServerID;
+	WORD wOnlineUserCnt;
+};
+
+struct CMD_CS_S_FakeServerInfo
+{
+	WORD wServerCnt;
+	WORD wDataSize;
+	tagFakeServerInfo  aFakeServerInfo[100];
 };
 //////////////////////////////////////////////////////////////////////////////////
 

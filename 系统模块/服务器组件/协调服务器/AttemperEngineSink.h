@@ -110,6 +110,10 @@ protected:
 	int								m_nMessageRemindTime2;				//距离比赛开始信息展示提醒时间2
 	int								m_nMessageRemindTime3;				//距离比赛开始信息展示提醒时间3
 	int								m_nMatchBeginRemindTime;			//距离比赛开始提醒时间
+	int								m_nNewPlayerServerId;				//新手房房间id
+	int								m_nHundredServerId;					//百炮房房间id
+	int								m_nThousandServerId;				//千炮房房间id
+	int								m_nTenThousandServerId;				//万炮房房间id
 	std::list<tagMatchConfigItem>	m_MatchConfigItemList;				//比赛配置数据
 	TCHAR							m_szMatchBeginTime[20];
 	WORD							m_wGroupCnt;						//比赛组数
@@ -118,6 +122,10 @@ protected:
 	WORD							m_wAndroidFakeNameCnt;
 	WORD							m_CurrentFakeNameNum;
 	int								m_IsRemind[3];
+	int								m_nDifferentTime;					
+	bool							m_bIsGameBegin;
+	// Time interval
+	//WORD							m_wSendFakeInfoInterval;
 
 	//变量定义
 protected:
@@ -224,6 +232,8 @@ protected:
 	bool SendMatchNotifyInfoBatch(WORD wMainCmdID, WORD wSubCmdID, VOID * pData, WORD wDataSize);
 	bool SendMatchUserInfoBatch(WORD wMainCmdID, WORD wSubCmdID);
 	bool SendMatchEndInfoToServer(int nMatchType);
+	time_t StringToDatetime(const char *strTime);
+	void OnRecord(CString strMsg);
 };
 
 //////////////////////////////////////////////////////////////////////////////////

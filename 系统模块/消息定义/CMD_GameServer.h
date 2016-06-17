@@ -210,6 +210,15 @@ struct CMD_GR_ConfigUserRight
 #define SUB_GR_MATCH_INFO_NOTIFY		 321							//比赛倒计时 比赛信息
 #define SUB_GR_MATCH_TIME_NOTIFY		 322							//比赛倒计时倒计时
 
+#define SUB_GR_MATCH_SHAREINFO           323
+#define SUB_GR_MATCH_SHAREINFO_RES       324
+
+#define SUB_GR_BUY_SKILL           325
+#define SUB_GR_BUY_SKILL_RES       326
+
+#define SUB_GR_BROAD_LABA           327
+#define SUB_GR_BROAD_LABA_RES       328
+
 //////////////////////////////////////////////////////////////////////////////////
 
 //旁观请求
@@ -476,6 +485,7 @@ struct CMD_GR_MatchScoreUpdate
 	int nSecond;//比赛倒计时，以秒为单位
 	SCORE lUserScore;//比赛积分
 	int nRanking;//比赛排名
+	char szMatchTitle[128];
 	CMD_GRO_MatchGroupInfo MatchGroupInfo[100];
 };
 
@@ -531,6 +541,51 @@ struct CMD_GR_ChairUserInfoReq
 {
 	WORD							wTableID;							//桌子号码
 	WORD							wChairID;							//椅子位置
+};
+
+struct CMD_GR_MatchShareInfo
+{
+	DWORD dwUserID;
+	int nRank;
+	int nMatchID;
+	char szMatchDate[16];
+};
+
+struct CMD_GR_MatchShareInfoRes
+{
+	char szUrl[64];
+	char szContent[256];
+};
+
+struct CMD_GR_BuySkill
+{
+	DWORD dwUserID;
+	BYTE cbSkillID;
+	int nCount;
+};
+
+struct CMD_GPO_BuySkill_Result
+{
+	bool bSuccess;
+	BYTE cbSkillID;
+	int nCount;
+	SCORE llScore;
+	TCHAR szDescribeString[128];				
+};
+
+struct CMD_GR_BroadLaba
+{
+	DWORD dwUserID;
+	WORD wSize;
+	char szNickName[64];
+	char szContent[1024];
+};
+
+struct CMD_GRO_BroadLaba
+{
+	BYTE cbSuccess;
+	SCORE score;
+	char szContent[128];
 };
 //////////////////////////////////////////////////////////////////////////////////
 //状态命令
@@ -1077,9 +1132,11 @@ struct CMD_GRO_MatchInfoNotify                          //比赛倒计时 比赛信息
 struct CMD_GRO_MatchEnd                                //比赛结束
 {
 	BYTE cbShare;//是否需要分享  0为不需要分享，1为需要分享, 2为无奖励
-	SCORE llScore;//积分
+	int nMatchID;
 	int nRanking;//排名
-	char szMatchPrise[128];//比赛奖励
+	SCORE llScore;//积分
+	char szMatchPrise[64];//比赛奖励
+	char szMatchDate[64];
 };
 
 #pragma pack()

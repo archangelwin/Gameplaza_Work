@@ -23,6 +23,7 @@
 #define IDI_GET_SUPERRANK_INFO		13									//获取超级海盗排名
 #define TIME_WEALTH_BAG_BEFORE		60									//还有多长时间才开始
 #define IDI_GET_NEW_MAIL_REMIND		61									//获取新邮件提醒
+#define IDI_QUERY_FAKE_SERVER_INFO  62									//Get Fake Server Info
 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -73,6 +74,9 @@ CAttemperEngineSink::CAttemperEngineSink()
 	m_LoginQueueInfo.clear();
 	m_nSendMaxNum = 0;
 	m_SuperRankInfo.clear();
+
+	// fake server info
+	m_wSendFakeInfoInterval = 30000;
 
 	ZeroMemory(m_NormalUserRewardConfig, sizeof(tagSignInDayInfo) * SIGNIN_REWARD_ARRAY_LENGTH);
 	ZeroMemory(m_VIPUserRewardConfig, sizeof(tagSignInDayInfo) * SIGNIN_REWARD_ARRAY_LENGTH);
@@ -160,6 +164,7 @@ bool CAttemperEngineSink::OnAttemperEngineStart(IUnknownEx * pIUnknownEx)
 	//读取签到奖励配置
 	//ReadSignInRewardConfig();
 	m_pITimerEngine->SetTimer(IDI_GET_NEW_MAIL_REMIND,5000L,TIMES_INFINITY,0);
+	m_pITimerEngine->SetTimer(IDI_QUERY_FAKE_SERVER_INFO,m_wSendFakeInfoInterval,TIMES_INFINITY,0);
 	return true;
 }
 
@@ -446,6 +451,12 @@ bool CAttemperEngineSink::OnEventTimer(DWORD dwTimerID, WPARAM wBindParam)
 		{
 			m_pIDataBaseEngine->PostDataBaseRequest(DBR_GP_GET_NEWMAIL_REMIND,0,NULL,0);
 			return true;			
+		}
+	// fake game server info
+	case IDI_QUERY_FAKE_SERVER_INFO:
+		{
+			m_pITCPSocketService->SendData(MDM_CS_MANAGER_SERVICE,SUB_CS_C_QUERY_FAKE_SERVERINFO,NULL,0);
+			return true;
 		}
 	}
 
@@ -888,6 +899,10 @@ bool CAttemperEngineSink::OnEventDataBase(WORD wRequestID, DWORD dwContextID, VO
 		{
 			return OnDBGetMatchResultPrize(dwContextID,pData,wDataSize);
 		}
+	case DBO_GP_BUY_SKILL:
+		{
+			return m_pITCPNetworkEngine->SendData(dwContextID, MDM_GP_USER_SERVICE, SUB_GP_BUY_SKILL_RESULT, pData, wDataSize);
+		}
 	}
 
 	return false;
@@ -1163,6 +1178,9 @@ bool CAttemperEngineSink::OnTCPSocketMainServiceInfo(WORD wSubCmdID, VOID * pDat
 
 			return true;
 		}
+	// online fake cnt 
+	// case fake cnt 
+	// SUB_GP_GET_ONLINE copy the content of the 
 	}
 
 	return true;
@@ -1252,13 +1270,28 @@ bool CAttemperEngineSink::OnTCPSocketMainManagerService(WORD wSubCmdID, VOID * p
 			m_pITCPNetworkEngine->SendDataBatch(MDM_GP_CORRESPOND, SUB_GP_SystemBroadLaBa, pData, wDataSize, 0);
 			return true;
 		}
+	case SUB_CS_S_QUERY_FAKE_SERVERINFO:
+		{
+			CMD_CS_S_FakeServerInfo * pFakeServerInfo = (CMD_CS_S_FakeServerInfo *)pData;
+			WORD wTmpSize = sizeof(CMD_CS_S_FakeServerInfo) - sizeof(tagFakeServerInfo) * (100 - pFakeServerInfo->wServerCnt);
+			if (wTmpSize != pFakeServerInfo->wDataSize)
+			{
+				return false;
+			}
+
+			// save a data local at the logon server, every time clear the vector and send 
+			// fill the vector no I should ask the correspond every time for the info then we use the data in the package to 
+
+			// copy data to the 
+			CopyMemory();
+			m_pITCPNetworkEngine->SendDataBatch(MDM_GP_USER_SERVICE, SUB_GP_WEALTH_BAG_BEFORE, &WealthBagBefore, sizeof(WealthBagBefore), 0);
+		}
 	}
 	return true;
 }
 
 //登录处理
 bool CAttemperEngineSink::OnTCPNetworkMainPCLogon(WORD wSubCmdID, VOID * pData, WORD wDataSize, DWORD dwSocketID)
-{
 	switch (wSubCmdID)
 	{
 	case SUB_GP_LOGON_GAMEID:		//I D 登录
@@ -1954,6 +1987,25 @@ bool CAttemperEngineSink::OnTCPNetworkMainPCUserService(WORD wSubCmdID, VOID * p
 			ZeroMemory(&sQueryInfo,sizeof(sQueryInfo));
 			sQueryInfo.dwUserID = pQueryInfo->dwUserID;
 			m_pIDataBaseEngine->PostDataBaseRequest(DBR_GP_QUERY_FREE_LABA_COUNT,dwSocketID,&sQueryInfo,sizeof(sQueryInfo));
+
+			return true;
+		}
+	case SUB_GP_BUY_SKILL:
+		{
+			//效验参数
+			ASSERT(wDataSize==sizeof(CMD_GPR_BuySkill));
+			if (wDataSize!=sizeof(CMD_GPR_BuySkill)) return false;
+
+			//处理消息
+			CMD_GPR_BuySkill * pBuyInfo=(CMD_GPR_BuySkill *)pData;
+
+			//变量定义
+			DBR_GP_Buy_Skill sBuySkill;
+			ZeroMemory(&sBuySkill,sizeof(sBuySkill));
+			sBuySkill.dwUserID = pBuyInfo->dwUserID;
+			sBuySkill.nSkillID = pBuyInfo->cbSkillID;
+			sBuySkill.nCount = pBuyInfo->nCount;
+			m_pIDataBaseEngine->PostDataBaseRequest(DBR_GP_BUY_SKILL,dwSocketID,&sBuySkill,sizeof(DBR_GP_Buy_Skill));
 
 			return true;
 		}
@@ -3088,6 +3140,16 @@ bool CAttemperEngineSink::OnTCPNetworkSubPCRegisterAccounts(VOID * pData, WORD w
 				}
 				break;
 			}
+		case DTP_GP_CLIENTIDFA:
+			{
+				if (DataDescribe.wDataSize > 0)
+				{
+					memcpy(szBuffer, pDataBuffer, DataDescribe.wDataSize);
+					szBuffer[DataDescribe.wDataSize] = 0;
+					lstrcpyn(RegisterAccounts.szIDFA, szBuffer, CountArray(RegisterAccounts.szIDFA));
+				}
+				break;
+			}
 		case DTP_GP_PASSWORD:
 			{
 				if (DataDescribe.wDataSize > 2)
@@ -3350,6 +3412,16 @@ bool CAttemperEngineSink::OnTCPNetworkSubPCGuestReg( VOID * pData, WORD wDataSiz
 					memcpy(szBuffer, pDataBuffer, DataDescribe.wDataSize);
 					szBuffer[DataDescribe.wDataSize] = 0;
 					lstrcpyn(RecordLogon.szClientVersion, szBuffer, CountArray(RecordLogon.szClientVersion));
+				}
+				break;
+			}
+		case DTP_GP_CLIENTIDFA:
+			{
+				if (DataDescribe.wDataSize > 0)
+				{
+					memcpy(szBuffer, pDataBuffer, DataDescribe.wDataSize);
+					szBuffer[DataDescribe.wDataSize] = 0;
+					lstrcpyn(RegisterAccounts.szIDFA, szBuffer, CountArray(RegisterAccounts.szIDFA));
 				}
 				break;
 			}
@@ -3687,6 +3759,8 @@ bool CAttemperEngineSink::OnDBPCLogonSuccess(DWORD dwContextID, VOID * pData, WO
 	Charge1stInfo.cbCanGet = pDBOLogonSuccess->cbCharge1stCanGet;
 	SendPacket.AddPacket(&Charge1stInfo, sizeof(DTP_GP_Charge1stInfo), DTP_GP_CHARGE1ST_INFO);
 
+	SendPacket.AddPacket(pDBOLogonSuccess->szPassPortID, DTP_GP_PASS_PORT_ID);
+
 	//登录成功
 	WORD wSendSize=SendPacket.GetDataSize()+sizeof(CMD_GP_LogonSuccess);
 	m_pITCPNetworkEngine->SendData(dwContextID,MDM_GP_LOGON,SUB_GP_LOGON_SUCCESS,cbDataBuffer,wSendSize);
@@ -3890,6 +3964,8 @@ bool CAttemperEngineSink::OnDBPCGuestLogon(DWORD dwContextID, VOID * pData, WORD
 	LogonGift.nCanShare = pDBOLogonSuccess->nCanShare;
 	LogonGift.nBankruptcyCondition = 1000;
 	SendPacket.AddPacket(&LogonGift, sizeof(DTP_GP_LogonGift), DTP_GP_LOGONGIFT);
+	
+	SendPacket.AddPacket(pDBOLogonSuccess->szPassPortID, DTP_GP_PASS_PORT_ID);
 
 	//登录成功
 	WORD wSendSize=SendPacket.GetDataSize()+sizeof(CMD_GP_GuestRegSuccess);
@@ -5931,6 +6007,16 @@ bool CAttemperEngineSink::OnTCPNetworkSubPCMBNumRegister( VOID * pData, WORD wDa
 					memcpy(szBuffer, pDataBuffer, DataDescribe.wDataSize);
 					szBuffer[DataDescribe.wDataSize] = 0;
 					lstrcpyn(RecordLogon.szClientVersion, szBuffer, CountArray(RecordLogon.szClientVersion));
+				}
+				break;
+			}
+		case DTP_GP_CLIENTIDFA:
+			{
+				if (DataDescribe.wDataSize > 0)
+				{
+					memcpy(szBuffer, pDataBuffer, DataDescribe.wDataSize);
+					szBuffer[DataDescribe.wDataSize] = 0;
+					lstrcpyn(RegisterAccounts.szIDFA, szBuffer, CountArray(RegisterAccounts.szIDFA));
 				}
 				break;
 			}

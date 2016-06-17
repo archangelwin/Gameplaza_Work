@@ -104,6 +104,9 @@
     <ClInclude Include="TableFrame.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="SensitiveWords.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="res\GameServer.ico">

@@ -287,6 +287,11 @@ public:
 	bool OnWinPearl(IServerUserItem * pIServerUserItem, int nPearlType, int nPearlCount);
 	//获取用户道具
 	bool OnGetUserItemCount(IServerUserItem * pIServerUserItem, int nType, SCORE lCount);
+	//修改背包
+	bool ModifyBackpack(IServerUserItem * pIServerUserItem, BYTE cbType, int nChange);
+
+	bool OnChangeMatchPlayerScore(IServerUserItem * pIServerUserItem, int wSignUpFee, WORD wChairID, SCORE &llUserScore);
+	void SetMatchStatus(bool bPlaying);
 
 	//系统事件
 public:

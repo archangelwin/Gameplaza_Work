@@ -807,7 +807,7 @@ struct DBO_SaveUserItemCount
 	SCORE lCount;
 };
 
-//#define DBO_LOAD_MATCH_CONFIG 728
+#define DBO_LOAD_MATCH_CONFIG 728
 
 struct DBO_Load_Match_Config_Item
 {
@@ -818,6 +818,7 @@ struct DBO_Load_Match_Config_Item
 	int nMatchUserCount;
 	int nGameTime;
 	int nMatchType;
+	TCHAR szMatchName[128];
 };
 
 
@@ -845,6 +846,8 @@ struct DBO_Load_Match_Reward_Config_Item
 	int nReward[10];
 	int nMachType;
 	int nShareType;
+	TCHAR szReward[128];
+	TCHAR szShare[128];
 };
 
 // 比赛报名
@@ -864,6 +867,57 @@ struct DBO_GR_Match_Get_Prize
 	int nPriseCount;//领取数量
 	SCORE lluserScore;
 	int nMatchId;
+};
+
+#define DBR_MODIFY_BACKPACK 734
+
+struct DBR_ModifyBackpack
+{
+	DWORD dwUserID;
+	BYTE cbType;
+	int nChange;
+};
+
+#define  DBR_GR_BUY_SKILL		735
+#define  DBO_GR_BUY_SKILL		736
+
+struct DBR_GR_Buy_Skill
+{
+	DWORD dwUserID;
+	int nSkillID;
+	int nCount;
+	SCORE llScore;
+};
+
+struct DBO_GR_Buy_Skill_Res
+{
+	bool bSuccess;
+	BYTE cbSkillID;
+	int nCount;
+	SCORE llCostScore;
+	TCHAR szDescribeString[128];
+};
+
+#define  DBR_GR_BROAD_LABA		737
+#define  DBO_GR_BROAD_LABA		738
+
+struct DBR_GR_Broad_Laba
+{
+	DWORD dwUserId;
+	WORD wSize;
+	SCORE llUserScore;
+	char szNickName[64];
+	char szContent[1024];
+};
+
+struct DBO_GR_Broad_Laba_Res
+{
+	WORD lResult;
+	SCORE llCostScore;
+	WORD wSize;
+	char szNickName[64];
+	TCHAR szErrorDes[128];
+	TCHAR szContent[1024];
 };
 
 //////////////////////////////////////////////////////////////////////////////////

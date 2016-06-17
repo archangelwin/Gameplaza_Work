@@ -257,6 +257,7 @@
     <ClInclude Include="GameServerDlg.h" />
     <ClInclude Include="InitParameter.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="SensitiveWords.h" />
     <ClInclude Include="SensitiveWordsFilter.h" />
     <ClInclude Include="ServerListManager.h" />
     <ClInclude Include="ServiceUnits.h" />

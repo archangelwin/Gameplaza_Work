@@ -14,6 +14,8 @@ struct DBR_GC_InsertMatchSignUpUser
 	WORD  wServerID;
 	int	  nMatchID;
 	WORD  wGroupID;
+	bool  bIsInGame;
+	SCORE llUserScore;
 };
 
 #define DBO_GC_INSERT_MATCH_SIGNUP_USER		1				// 插入用户报名信息结果
@@ -21,9 +23,13 @@ struct DBO_GC_Insert_Match_SignUp_User
 {
 	DWORD dwUserID;
 	WORD  wServerID;
+	WORD  wGroupID;
 	bool  bIsSignUpSuc;
 	int   nMatchID;
 	bool  bMatchStatus;//报名状态，0为未报名，1为已经报名
+	int   nMatchType;
+	bool  bIsInGame;
+	WORD  wEnrollmentFee;
 	TCHAR szNickName[LEN_NICKNAME];			//用户昵称
 	TCHAR szDescription[128];//描述信息
 };
@@ -52,14 +58,22 @@ struct stMatchResult
 	TCHAR szBeginTime[20];
 	TCHAR szEndTime[20];
 	int nMatchNum;
-	int nIsShare;
 	int nServerId;
 	int nIsComplete;
 	int nIsRobot;
 	int nMatchType;
 	int nGroupId;
+	int nIsGet;
 };
 
+#define DBR_GR_GET_SQL_TIME	5						//获得数据库时间
+
+#define DBO_GR_GET_SQL_TIME 6
+
+struct DBO_Get_Sql_Time
+{
+	TCHAR szTime[128];
+};
 #pragma pack()
 
 #endif

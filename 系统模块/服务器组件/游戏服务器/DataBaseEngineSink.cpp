@@ -424,6 +424,16 @@ bool CDataBaseEngineSink::OnDataBaseEngineRequest(WORD wRequestID, DWORD dwConte
 			bSucceed = OnRequestGetMatchPirze(dwContextID,pData,wDataSize,dwUserID);
 		}
 		break;
+	case DBR_GR_BUY_SKILL:
+		{
+			bSucceed = OnRequestBuySkill(dwContextID,pData,wDataSize,dwUserID);
+		}
+		break;
+	case DBR_GR_BROAD_LABA:
+		{
+			bSucceed = OnRequestBroadCastLaBa(dwContextID,pData,wDataSize,dwUserID);
+		}
+		break;
 	case DBR_GR_MANAGE_USER_RIGHT:		//用户权限
 		{
 			bSucceed = OnRequestManageUserRight(dwContextID,pData,wDataSize,dwUserID);
@@ -553,6 +563,11 @@ bool CDataBaseEngineSink::OnDataBaseEngineRequest(WORD wRequestID, DWORD dwConte
 	case DBR_GR_MATCH_USERSIGNUP:
 		{
 			bSucceed = OnRequestUserMatchSignUP(dwContextID,pData,wDataSize,dwUserID);
+		}
+		break;
+	case DBR_MODIFY_BACKPACK:
+		{
+			bSucceed = OnRequestUserModifyBackpack(dwContextID,pData,wDataSize,dwUserID);
 		}
 		break;
 	}
@@ -2544,6 +2559,8 @@ bool CDataBaseEngineSink::OnBankCheckStock(DWORD dwContextID, VOID * pData, WORD
 		m_TreasureDBAide.AddParameter(TEXT("@lCaiJin"),(long)pCheckStock->lCaiJin);
 		m_TreasureDBAide.AddParameter(TEXT("@lCaiJinSent"),(long)pCheckStock->lCaiJinSent);
 		m_TreasureDBAide.AddParameter(TEXT("@lbLoadOnly"),(long)(pCheckStock->lbLoad ? 1 : 0));
+		//printf("lTypeID=%ld,lRoomID=%ld,lTableID=%ld,lStock=%ld,lRevenue=%ld,lCaiJin=%ld,lCaiJinSent=%ld,lbLoadOnly=%d\n",pCheckStock->lTypeID,pCheckStock->lRoomID,pCheckStock->lTableID,
+		//	pCheckStock->lStockScore,pCheckStock->lRevenue,pCheckStock->lCaiJin,pCheckStock->lCaiJinSent,(pCheckStock->lbLoad ? 1 : 0));
 		m_TreasureDBAide.ExecuteProcess(TEXT("GSP_GR_FishCheckStock"),true);
 
 		tagDBR_GR_CheckStockSuccess lRet;
@@ -2551,7 +2568,6 @@ bool CDataBaseEngineSink::OnBankCheckStock(DWORD dwContextID, VOID * pData, WORD
 		lRet.lRoomID = pCheckStock->lRoomID;
 		lRet.lTableID = pCheckStock->lTableID;
 		lRet.lType = pCheckStock->lTypeID;
-
 		if (0 != m_TreasureDBModule->GetRecordCount())
 		{
 			m_TreasureDBModule->MoveToFirst();
@@ -2567,7 +2583,6 @@ bool CDataBaseEngineSink::OnBankCheckStock(DWORD dwContextID, VOID * pData, WORD
 				lRet.lbSuccess = TRUE;
 			}
 		}
-
 		//投递调度通知
 		m_pIDataBaseEngineEvent->OnEventDataBaseResult(DBR_GR_CHECKSTOCK_SUCCESS,dwContextID, &lRet, (WORD)(sizeof(tagDBR_GR_CheckStockSuccess)));
 	}
@@ -3494,49 +3509,55 @@ bool CDataBaseEngineSink::OnRequestUserMaxKValue(DWORD dwContextID, VOID * pData
 //读取比赛配置信息
 bool CDataBaseEngineSink::OnRequestLoadMatchConfig(DWORD dwContextID, VOID * pData, WORD wDataSize, DWORD &dwUserID)
 {
-	return true;
-	//try
-	//{
-	//	WORD wPacketSize=0;
-	//	BYTE cbBuffer[MAX_ASYNCHRONISM_DATA];
-	//	//构造参数
-	//	m_GameDBAide.ResetParameter();
-	//	//执行查询
-	//	LONG lReturnValue=m_GameDBAide.ExecuteProcess(TEXT("GSP_GR_LoadMatchConfig"),true);
-	//	DBO_Load_Match_Config_Item * pMatchConfigItem=NULL;
-	//	//结果处理
-	//	if(lReturnValue==0)
-	//	{
-	//		//读取信息
-	//		while(true)
-	//		{
-	//			if (m_GameDBModule->IsRecordsetEnd()==true) break;
-	//			pMatchConfigItem=(DBO_Load_Match_Config_Item *)(cbBuffer+wPacketSize);
-	//			//读取数据
-	//			pMatchConfigItem->nStartTime=m_GameDBAide.GetValue_LONG(TEXT("StartTime"));
-	//			pMatchConfigItem->nEndTime=m_GameDBAide.GetValue_LONG(TEXT("EndTime"));
-	//			pMatchConfigItem->nMatchNum=m_GameDBAide.GetValue_LONG(TEXT("MachNum"));
-	//			pMatchConfigItem->nApplyCost=m_GameDBAide.GetValue_LONG(TEXT("ApplyCost"));
-	//			pMatchConfigItem->nMatchUserCount=m_GameDBAide.GetValue_LONG(TEXT("MachUserCount"));
-	//			pMatchConfigItem->nGameTime=m_GameDBAide.GetValue_LONG(TEXT("GameTimes"));
-	//			//设置位移
-	//			wPacketSize+=sizeof(DBO_Load_Match_Config_Item);
-	//			//移动记录
-	//			m_GameDBModule->MoveToNext();
-	//		}
-	//		if (wPacketSize>0)m_pIDataBaseEngineEvent->OnEventDataBaseResult(DBO_LOAD_MATCH_CONFIG,dwContextID,cbBuffer,wPacketSize);
-	//	}
+	try
+	{
+		WORD wPacketSize=0;
+		BYTE cbBuffer[MAX_ASYNCHRONISM_DATA*10];
+		//构造参数
+		m_TreasureDBAide.ResetParameter();
+		SYSTEMTIME st;
+		GetLocalTime(&st);
+		char szTime[20];
+		sprintf(szTime,"%d-%d-%d",st.wYear,st.wMonth,st.wDay);
+		m_TreasureDBAide.AddParameter(TEXT("@MachDay"),szTime);
+		//执行查询
+		LONG lReturnValue=m_TreasureDBAide.ExecuteProcess(TEXT("GSP_GR_LoadMatchConfig"),true);
+		DBO_Load_Match_Config_Item * pMatchConfigItem=NULL;
+		//结果处理
+		if(lReturnValue==0)
+		{
+			//读取信息
+			while(true)
+			{
+				if (m_TreasureDBModule->IsRecordsetEnd()==true) break;
+				pMatchConfigItem=(DBO_Load_Match_Config_Item *)(cbBuffer+wPacketSize);
+				//读取数据
+				pMatchConfigItem->nStartTime=m_TreasureDBAide.GetValue_LONG(TEXT("StartTime"));
+				pMatchConfigItem->nEndTime=m_TreasureDBAide.GetValue_LONG(TEXT("EndTime"));
+				pMatchConfigItem->nMatchNum=m_TreasureDBAide.GetValue_LONG(TEXT("MachNum"));
+				pMatchConfigItem->nApplyCost=m_TreasureDBAide.GetValue_LONG(TEXT("ApplyCost"));
+				pMatchConfigItem->nMatchUserCount=m_TreasureDBAide.GetValue_LONG(TEXT("MachUserCount"));
+				pMatchConfigItem->nGameTime=m_TreasureDBAide.GetValue_LONG(TEXT("GameTimes"));
+				pMatchConfigItem->nMatchType=m_TreasureDBAide.GetValue_LONG(TEXT("MachType"));
+				m_TreasureDBAide.GetValue_String(TEXT("MachName"),pMatchConfigItem->szMatchName,CountArray(pMatchConfigItem->szMatchName));
+				//设置位移
+				wPacketSize+=sizeof(DBO_Load_Match_Config_Item);
+				//移动记录
+				m_TreasureDBModule->MoveToNext();
+			}
+			if (wPacketSize>0)m_pIDataBaseEngineEvent->OnEventDataBaseResult(DBO_LOAD_MATCH_CONFIG,dwContextID,cbBuffer,wPacketSize);
+		}
 
-		//return true;
-	//}
-	//catch (IDataBaseException * pIException)
-	//{
-	//	//错误信息
-	//	CTraceService::TraceString(TEXT("GSP_GR_LoadMatchConfig"),TraceLevel_Exception);
-	//	CTraceService::TraceString(pIException->GetExceptionDescribe(),TraceLevel_Exception);
+		return true;
+	}
+	catch (IDataBaseException * pIException)
+	{
+		//错误信息
+		CTraceService::TraceString(TEXT("GSP_GR_LoadMatchConfig"),TraceLevel_Exception);
+		CTraceService::TraceString(pIException->GetExceptionDescribe(),TraceLevel_Exception);
 
-	//	return false;
-	//}
+		return false;
+	}
 
 	return true;
 }
@@ -3575,7 +3596,9 @@ bool CDataBaseEngineSink::OnRequestLoadMatchRewardConfig(DWORD dwContextID, VOID
 				pMatchConfigItem->nReward[8] = m_GameDBAide.GetValue_LONG(TEXT("Award8"));
 				pMatchConfigItem->nReward[9] = m_GameDBAide.GetValue_LONG(TEXT("Award9"));
 				pMatchConfigItem->nMachType = m_GameDBAide.GetValue_LONG(TEXT("MachType"));
-				pMatchConfigItem->nShareType = m_GameDBAide.GetValue_LONG(TEXT("ShareType"));
+				pMatchConfigItem->nShareType = m_GameDBAide.GetValue_BYTE(TEXT("ShareType"));
+				m_GameDBAide.GetValue_String(TEXT("RewardIntro"),pMatchConfigItem->szReward,CountArray(pMatchConfigItem->szReward));
+				m_GameDBAide.GetValue_String(TEXT("ShareIntro"),pMatchConfigItem->szShare,CountArray(pMatchConfigItem->szShare));
 				//设置位移
 				wPacketSize+=sizeof(DBO_Load_Match_Reward_Config_Item);
 				//移动记录
@@ -3653,30 +3676,144 @@ bool CDataBaseEngineSink::OnRequestGetMatchPirze(DWORD dwContextID, VOID * pData
 		m_TreasureDBAide.AddParameter(TEXT("@UserID"), pGetMatchPrize->dwUserID);
 		m_TreasureDBAide.AddParameter(TEXT("@MatchNum"), pGetMatchPrize->nMatchID);
 		m_TreasureDBAide.AddParameter(TEXT("@MatchDay"), pGetMatchPrize->szMatchData);
+		printf("userid=%d,MatchNum=%d,MatchDay=%s\n",pGetMatchPrize->dwUserID,pGetMatchPrize->nMatchID,pGetMatchPrize->szMatchData);
 		//执行查询
 		LONG lResultCode=m_TreasureDBAide.ExecuteProcess(TEXT("GSP_GP_Get_Match_Prize"),true);
-		printf("执行领奖存储过程\n");
+		
 		DBO_GR_Match_Get_Prize pMatchGetPrize={0};
 		//结果处理
 		if(lResultCode==0)
 		{
 			//读取数据
 			pMatchGetPrize.bPriseStatus = true;
+			pMatchGetPrize.nPriseCount=m_TreasureDBAide.GetValue_LONG(TEXT("RewardGold"));
+	/*		pMatchGetPrize.nPriseType=m_TreasureDBAide.GetValue_LONG(TEXT("MatchType"));*/
+			pMatchGetPrize.nPriseType=1;
+			pMatchGetPrize.lluserScore=m_TreasureDBAide.GetValue_LONGLONG(TEXT("Score"));
+			pMatchGetPrize.nMatchId = m_TreasureDBAide.GetValue_LONGLONG(TEXT("MatchID"));
+
 		}
 		else
 		{
 			pMatchGetPrize.bPriseStatus = false;
 		}
-		pMatchGetPrize.nPriseCount=m_TreasureDBAide.GetValue_LONG(TEXT("RewardGold"));
-		pMatchGetPrize.nPriseType=m_TreasureDBAide.GetValue_LONG(TEXT("MatchType"));
-		pMatchGetPrize.lluserScore=m_TreasureDBAide.GetValue_LONGLONG(TEXT("Score"));
-		pMatchGetPrize.nMatchId = m_TreasureDBAide.GetValue_LONGLONG(TEXT("MatchID"));
+
+
 		m_pIDataBaseEngineEvent->OnEventDataBaseResult(DBO_GR_MATCH_GET_PRIZE,dwContextID,&pMatchGetPrize,sizeof(DBO_GR_Match_Get_Prize));
 	}
 	catch (IDataBaseException * pIException)
 	{
 		//错误信息
 		CTraceService::TraceString(TEXT("GSP_GP_Get_Match_Prize"),TraceLevel_Exception);
+		CTraceService::TraceString(pIException->GetExceptionDescribe(),TraceLevel_Exception);
+	}
+
+	return true;
+}
+
+bool CDataBaseEngineSink::OnRequestBuySkill(DWORD dwContextID, VOID * pData, WORD wDataSize, DWORD &dwUserID)
+{
+	if (wDataSize!=sizeof(DBR_GR_Buy_Skill)) return false;
+
+	//解析信息
+	DBR_GR_Buy_Skill * pBuySkill = (DBR_GR_Buy_Skill *)pData;
+	dwUserID = pBuySkill->dwUserID;
+	try
+	{
+
+		//执行查询
+		m_TreasureDBAide.ResetParameter();
+		m_TreasureDBAide.AddParameter(TEXT("@UserID"), pBuySkill->dwUserID);
+		m_TreasureDBAide.AddParameter(TEXT("@IsInGame"), 1);
+		m_TreasureDBAide.AddParameter(TEXT("@nSkillID"), pBuySkill->nSkillID);
+		m_TreasureDBAide.AddParameter(TEXT("@nCount"), pBuySkill->nCount);
+		m_TreasureDBAide.AddParameter(TEXT("@llUserScoreInGame"), pBuySkill->llScore);
+		TCHAR szDescribeString[128]=TEXT("");
+		m_TreasureDBAide.AddParameterOutput(TEXT("@strErrorDescribe"),szDescribeString,sizeof(szDescribeString),adParamOutput);
+
+		//执行查询
+		LONG lResultCode=m_TreasureDBAide.ExecuteProcess(TEXT("GSP_GP_Buy_Skill"),true);
+
+		//结果处理
+		CDBVarValue DBVarValue;
+		m_TreasureDBModule->GetParameter(TEXT("@strErrorDescribe"),DBVarValue);
+
+		DBO_GR_Buy_Skill_Res stBuySkillRes={0};
+		//结果处理
+		if(lResultCode==0)
+		{
+			//读取数据
+			stBuySkillRes.bSuccess = true;
+		}
+		else
+		{
+			stBuySkillRes.bSuccess = false;
+		}
+		stBuySkillRes.cbSkillID=m_TreasureDBAide.GetValue_LONG(TEXT("nSkillID"));
+		stBuySkillRes.nCount=m_TreasureDBAide.GetValue_LONG(TEXT("nCount"));
+		stBuySkillRes.llCostScore=m_TreasureDBAide.GetValue_LONGLONG(TEXT("Enrollmentfee"));
+		lstrcpyn(stBuySkillRes.szDescribeString,CW2CT(DBVarValue.bstrVal),sizeof(stBuySkillRes.szDescribeString));
+		m_pIDataBaseEngineEvent->OnEventDataBaseResult(DBO_GR_BUY_SKILL,dwContextID,&stBuySkillRes,sizeof(DBO_GR_Buy_Skill_Res));
+	}
+	catch (IDataBaseException * pIException)
+	{
+		//错误信息
+		CTraceService::TraceString(TEXT("GSP_GP_Buy_Skill"),TraceLevel_Exception);
+		CTraceService::TraceString(pIException->GetExceptionDescribe(),TraceLevel_Exception);
+	}
+
+	return true;
+}
+
+bool CDataBaseEngineSink::OnRequestBroadCastLaBa(DWORD dwContextID, VOID * pData, WORD wDataSize, DWORD &dwUserID)
+{
+	try
+	{
+
+		//效验参数
+		ASSERT(wDataSize==sizeof(DBR_GR_Broad_Laba));
+		if (wDataSize!=sizeof(DBR_GR_Broad_Laba)) return false;
+		BYTE cbBuffer[MAX_ASYNCHRONISM_DATA];
+		//请求处理
+		DBR_GR_Broad_Laba * pRequstInfo=(DBR_GR_Broad_Laba *)pData;
+		//构造参数
+		dwUserID = pRequstInfo->dwUserId;
+		m_TreasureDBAide.ResetParameter();
+		m_TreasureDBAide.AddParameter(TEXT("@UserID"),pRequstInfo->dwUserId);
+		m_TreasureDBAide.AddParameter(TEXT("@IsInGame"),1);
+		m_TreasureDBAide.AddParameter(TEXT("@llUserScoreInGame"),pRequstInfo->llUserScore);
+		//输出参数
+		TCHAR szDescribeString[128]=TEXT("");
+		m_TreasureDBAide.AddParameterOutput(TEXT("@strErrorDescribe"),szDescribeString,sizeof(szDescribeString),adParamOutput);
+
+		//执行查询
+		LONG lResultCode=m_TreasureDBAide.ExecuteProcess(TEXT("GSP_GP_BroadCastLaBa"),true);
+		//结果处理
+		CDBVarValue DBVarValue;
+		m_TreasureDBModule->GetParameter(TEXT("@strErrorDescribe"),DBVarValue);
+		DBO_GR_Broad_Laba_Res s_Res;
+		if (lResultCode==1)
+		{
+			lstrcpyn(s_Res.szErrorDes,CW2CT(DBVarValue.bstrVal),sizeof(s_Res.szErrorDes));
+		}
+		else
+		{
+			s_Res.llCostScore = m_TreasureDBAide.GetValue_LONGLONG(TEXT("Enrollmentfee"));
+			lstrcpyn(s_Res.szErrorDes,CW2CT(DBVarValue.bstrVal),sizeof(s_Res.szErrorDes));
+			lstrcpyn(s_Res.szContent,pRequstInfo->szContent,sizeof(pRequstInfo->szContent));
+			lstrcpyn(s_Res.szNickName,pRequstInfo->szNickName,sizeof(s_Res.szNickName));
+			s_Res.wSize = pRequstInfo->wSize;
+		}
+		s_Res.lResult = lResultCode;
+
+		//结果处理
+		m_pIDataBaseEngineEvent->OnEventDataBaseResult(DBO_GR_BROAD_LABA,dwContextID,&s_Res,sizeof(DBO_GR_Broad_Laba_Res));
+		return true;
+	}
+	catch (IDataBaseException * pIException)
+	{
+		//错误信息
+		CTraceService::TraceString(TEXT("GSP_GP_BroadCastLaBa"),TraceLevel_Exception);
 		CTraceService::TraceString(pIException->GetExceptionDescribe(),TraceLevel_Exception);
 	}
 
@@ -3721,4 +3858,34 @@ VOID CDataBaseEngineSink::OnMatchSignUpDisposeResult(DWORD dwContextID, DWORD dw
 
 	return;
 }
+
+bool CDataBaseEngineSink::OnRequestUserModifyBackpack(DWORD dwContextID, VOID * pData, WORD wDataSize, DWORD &dwUserID)
+{
+	DBR_ModifyBackpack * pModifyBackpack=(DBR_ModifyBackpack *)pData;
+
+	dwUserID=pModifyBackpack->dwUserID;
+
+	try
+	{
+		m_TreasureDBAide.ResetParameter();
+		m_TreasureDBAide.AddParameter(TEXT("@dwUserID"),pModifyBackpack->dwUserID);
+		m_TreasureDBAide.AddParameter(TEXT("@cbType"),pModifyBackpack->cbType);
+		m_TreasureDBAide.AddParameter(TEXT("@nChange"),pModifyBackpack->nChange);
+
+		LONG lResultCode=m_TreasureDBAide.ExecuteProcess(TEXT("GSP_GR_ModifyBackpack"),true);
+
+		return true;
+	}
+	catch (IDataBaseException * pIException)
+	{
+		CString str = TEXT("[GSP_GR_ModifyBackpack] ");
+		str += pIException->GetExceptionDescribe();
+		CTraceService::TraceString(str,TraceLevel_Exception);
+
+		return false;
+	}
+
+	return true;
+}
+
 //////////////////////////////////////////////////////////////////////////////////

@@ -106,6 +106,7 @@ struct DBR_GP_RegisterAccounts
 	//附加信息
 	DWORD							dwClientAddr;						//连接地址
 	TCHAR							szMachineID[LEN_MACHINE_ID];		//机器序列
+	TCHAR							szIDFA[40];
 
 	//连接信息
 	LPVOID							pBindParameter;						//绑定参数
@@ -406,6 +407,7 @@ struct DBO_GP_LogonSuccess
 	BYTE							cbCanGetBankruptcy;
 	int								nBankruptcyCount;
 	bool							bIsLogin;
+	TCHAR							szPassPortID[LEN_PASS_PORT_ID];
 };
 
 //登录失败
@@ -1296,6 +1298,25 @@ struct DBO_GR_Match_Get_Prize
 	BYTE nPriseType;//比赛奖励类型
 	int nPriseCount;//领取数量
 	SCORE lluserScore;
+};
+
+#define DBR_GP_BUY_SKILL 1025
+#define DBO_GP_BUY_SKILL 2025
+
+struct DBR_GP_Buy_Skill
+{
+	DWORD dwUserID;
+	int nSkillID;
+	int nCount;
+};
+
+struct DBO_GP_Buy_Skill_Res
+{
+	bool bSuccess;
+	BYTE cbSkillID;
+	int nCount;
+	SCORE llScore;
+	TCHAR szDescribeString[128];
 };
 
 //////////////////////////////////////////////////////////////////////////////////
